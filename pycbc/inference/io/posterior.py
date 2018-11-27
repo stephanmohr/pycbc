@@ -1,8 +1,8 @@
-# Copyright (C) 2016  Christopher M. Biwer
+# Copyright (C) 2018 Alex Nitz
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 3 of the License, or (at your
-# option) any later version.
+# self.option) any later version.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,19 +21,30 @@
 #
 # =============================================================================
 #
-"""
-This modules provides a list of implemented samplers for parameter estimation.
+"""Provides simplified standard format just for posterior data
 """
 
-import numpy
-from pycbc.inference.sampler_kombine import KombineSampler
-from pycbc.inference.sampler_emcee import EmceeEnsembleSampler, EmceePTSampler
-from pycbc.inference.sampler_mcmc import MCMCSampler
+from .base_hdf import BaseInferenceFile
 
-# list of available samplers
-samplers = {
-    KombineSampler.name : KombineSampler,
-    EmceeEnsembleSampler.name : EmceeEnsembleSampler,
-    EmceePTSampler.name : EmceePTSampler,
-    MCMCSampler.name : MCMCSampler,
-}
+
+class PosteriorFile(BaseInferenceFile):
+    """Class to handle file IO for the simplified Posterior file"""
+
+    name = 'posterior_file'
+
+    def read_raw_samples(self, fields, **kwargs):
+        samples = self[self.samples_group]
+        return {field: samples[field][:] for field in samples}
+
+    def write_posterior(self, filename, **kwargs):
+        """Write me."""
+        raise NotImplementedError
+
+    def write_resume_point(self):
+        raise NotImplementedError
+
+    def write_sampler_metadata(self, sampler):
+        raise NotImplementedError
+
+    def write_samples(self, samples, **kwargs):
+        raise NotImplementedError

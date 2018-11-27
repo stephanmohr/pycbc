@@ -48,7 +48,6 @@ install_requires =  setup_requires + ['Mako>=1.0.1',
                       'lscsoft-glue>=1.59.3',
                       'kombine>=0.8.2',
                       'emcee==2.2.1',
-                      'corner>=2.0.1',
                       'requests>=1.2.1',
                       'beautifulsoup4>=4.6.0',
                       'six>=1.10.0',
@@ -123,12 +122,8 @@ def get_version_info():
         vinfo = _version_helper.generate_git_version_info()
     except:
         vinfo = vdummy()
-        vinfo.version = '1.12.dev4'
+        vinfo.version = '1.13.2dev'
         vinfo.release = 'False'
-    vinfo = vdummy()
-    vinfo.version = '1.12.dev4'
-    vinfo.release = 'False'
-
 
     with open('pycbc/version.py', 'w') as f:
         f.write("# coding: utf-8\n")
