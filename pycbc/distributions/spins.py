@@ -334,7 +334,7 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
     """
     name = "uniform_chip_chieff_truncated"
     _params = ['mass1','mass2','zeta1', 'zeta2','chi_eff','chi_a',
-               'phi_1','phi_2']
+               'phi1','phi2']
     
     def __init__(self, mass1=None, mass2=None, chi_eff=None, chi_a=None,
                  nsamples=None, seed=None):
@@ -365,16 +365,16 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
         self.zeta1_distr = TruncatedPowerLaw(dim=0.5, zeta1=(0,1))
         self.zeta2_distr = UniformPowerLaw(dim=0.5, zeta2=(0,1))
         # The angles: Now use phi1 and phi2 instead of phia, phis.
-        self.phi1_distr = UniformAngle(phi_1=(0,2))
-        self.phi2_distr = UniformAngle(phi_2=(0,2))
+        self.phi1_distr = UniformAngle(phi1=(0,2))
+        self.phi2_distr = UniformAngle(phi2=(0,2))
         self.distributions = {'mass1': self.mass1_distr,
                               'mass2': self.mass2_distr,
                               'zeta1': self.zeta1_distr,
                               'zeta2': self.zeta2_distr,
                               'chi_eff': self.chieff_distr,
                               'chi_a': self.chia_distr,
-                              'phi_1': self.phi1_distr,
-                              'phi_2': self.phi2_distr}
+                              'phi1': self.phi1_distr,
+                              'phi2': self.phi2_distr}
         # create random samples for the kde
         if nsamples is None:
             nsamples = 1e4
@@ -394,7 +394,7 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
             mass1=rvals['mass1'], mass2=rvals['mass2'], 
             zeta1=rvals['zeta1'], zeta2=rvals['zeta2'],
             chi_eff=rvals['chi_eff'], chi_a=rvals['chi_a'],
-            phi_1=rvals['phi_1'], phi_2=rvals['phi_2'],
+            phi1=rvals['phi1'], phi2=rvals['phi2'],
             bounds=bounds)
     
     def _constraints(self,values):
@@ -412,9 +412,9 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
         bool
             Whether or not the values satisfy the physical constraints.
         """
-        mass1, mass2, phi_1, phi_2, chi_eff, chi_a, zeta1, zeta2, _ = \
+        mass1, mass2, phi1, phi2, chi_eff, chi_a, zeta1, zeta2, _ = \
             conversions.ensurearray(values['mass1'], values['mass2'],
-                                    values['phi_1'], values['phi_2'],
+                                    values['phi1'], values['phi2'],
                                     values['chi_eff'], values['chi_a'],
                                     values['zeta1'], values['zeta2'])
         s1z = conversions.spin1z_from_mass1_mass2_chi_eff_chi_a(mass1,mass2,
@@ -452,13 +452,13 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
         # draw angles
         mass1, mass2 = numpy.maximum(mass1,mass2), numpy.minimum(mass1,mass2) 
         try:
-            phi_1 = kwargs['phi_1']
+            phi1 = kwargs['phi1']
         except KeyError:
-            phi_1 = self.phi1_distr.rvs(size=size)['phi_1']
+            phi1 = self.phi1_distr.rvs(size=size)['phi1']
         try: 
-            phi_2 = kwargs['phi_2']
+            phi2 = kwargs['phi2']
         except KeyError:
-            phi_2 = self.phi2_distr.rvs(size=size)['phi_2']
+            phi2 = self.phi2_distr.rvs(size=size)['phi2']
         # draw chi_eff, chi_a
         try:
             chi_eff = kwargs['chi_eff']
@@ -483,8 +483,8 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
         arr = numpy.zeros(size, dtype=dtype)
         arr['mass1'] = mass1
         arr['mass2'] = mass2 
-        arr['phi_1'] = phi_1
-        arr['phi_2'] = phi_2 
+        arr['phi1'] = phi1
+        arr['phi2'] = phi2 
         arr['chi_eff'] = chi_eff 
         arr['chi_a'] = chi_a 
         arr['zeta1'] = zeta1 
@@ -555,28 +555,20 @@ class UniformChiPChiEffTruncatedPowerLaw(Arbitrary):
                    nsamples=nsamples)
 
 
+
 class UniformChiPChiEffGamma(Arbitrary):
-    r"""A distribution such that :math:`\chi_{\mathrm{eff}}` and 
-    :math:`\chi_p` have uniform densities in the following sense:
-
-    Keeping all other parameters fixed and varying only 
-    :math:`\chi_{\mathrm{eff}}` or :math:`\chi_p`, the density will 
-    stay constant. This does not imply that the marginals of 
-    :math:`\chi_{\mathrm{eff}}` or :math:`\chi_p` are uniform, nor that 
-    the two parameters are independent.
-
-    This distribution uses 
+    r"""
+    An abstract base class that supplies functionality for distributions 
+    that sample in :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, the perpendicular
+    spin components and the azimuthal angles phi1 and phi2. 
+    Mass distributions have to be added in derived classes, and are necessary 
+    for the _draw function to work correctly: 
+        _draw calls a function _drawMasses which returns a tuple (mass1, mass2) 
+        or a tuple of arrays (mass1,mass2) for a given size. 
+    Derived classes also need to provide a static string `name`. 
 
     Parameters
     ----------
-    mass1 : BoundedDist, Bounds, or tuple 
-        The distribution or bounds to use for mass1. Must be either a 
-        BoundedDist giving the distribution on mass1, or bounds (as 
-        either a Bounds instance or a tuple) giving the minimum and maximum 
-        values to use for mass1. If the latter, a Uniform distribution will 
-        be used.
-    mass2 : BoundedDist, Bounds, or tuple
-        The distribution or bounds to use for mass2. Same Syntax as for mass1.
     chi_eff : BoundedDist, Bounds or tuple; optional
         The distribution or bounds to use for :math:`\chi_{eff}`. Syntax is the 
         same as mass1, except that None may also be pased. In that case, 
@@ -597,11 +589,11 @@ class UniformChiPChiEffGamma(Arbitrary):
         the samples are gneerated, the state will be set back to what it was.
         If None provided, will use 0.
     """
-    name = "uniform_chip_chieff_gamma"
-    _params = ['mass1','mass2','zeta1', 'zeta2','s1z','s2z',
-               'phi_1','phi_2','chi_p']
+
+    _params = ['mass1','mass2','zeta1','zeta2','spin1z','spin2z',
+               'phi1','phi2']
     
-    def __init__(self, mass1=None, mass2=None, chi_eff=None, chi_p=None,
+    def __init__(self, chi_eff=None, chi_p=None,
                  nsamples=None, seed=None):
 
         # save the number of samples drawn by _draw 
@@ -610,14 +602,6 @@ class UniformChiPChiEffGamma(Arbitrary):
         self.drawn = 0
         self.accepted = 0
         
-        if isinstance(mass1, BoundedDist):
-            self.mass1_distr = mass1 
-        else:
-            self.mass1_distr = Uniform(mass1=mass1)
-        if isinstance(mass2, BoundedDist):
-            self.mass2_distr = mass2
-        else:
-            self.mass2_distr = Uniform(mass2=mass2) 
         # chi_eff and chi_p
         if isinstance(chi_eff, BoundedDist):
             self.chieff_distr = chi_eff 
@@ -636,15 +620,12 @@ class UniformChiPChiEffGamma(Arbitrary):
         self.gammap_distr = Uniform(gamma_p=(-1,1))
         self.gammaz_distr = Uniform(gamma_z=(0,1))
         # The angles: Now use phi1 and phi2 instead of phia, phis.
-        self.phi1_distr = UniformAngle(phi_1=(0,2))
-        self.phi2_distr = UniformAngle(phi_2=(0,2))
+        self.phi1_distr = UniformAngle(phi1=(0,2))
+        self.phi2_distr = UniformAngle(phi2=(0,2))
 
         # add Arbitrary distributions for zeta1, zeta2 and chi_a later
-        self.distributions = {'mass1': self.mass1_distr,
-                              'mass2': self.mass2_distr,
-                              'phi_1': self.phi1_distr,
-                              'phi_2': self.phi2_distr,
-                              'chi_p': self.chip_distr}
+        self.distributions = {'phi1': self.phi1_distr,
+                              'phi2': self.phi2_distr}
         # save the current random state
         rstate = numpy.random.get_state()
         if nsamples is None:
@@ -661,23 +642,23 @@ class UniformChiPChiEffGamma(Arbitrary):
                         for b in distr.bounds.items())
         bounds['zeta1'] = (0.,1.)
         bounds['zeta2'] = (0.,1. )
-        bounds['s1z'] = (-1.,1.)
-        bounds['s2z'] = (-1.,1.) 
+        bounds['spin1z'] = (-1.,1.)
+        bounds['spin2z'] = (-1.,1.) 
         super(UniformChiPChiEffGamma, self).__init__(
             bounds=bounds,
             mass1=rvals['mass1'], mass2=rvals['mass2'], 
             zeta1=rvals['zeta1'], zeta2=rvals['zeta2'],
-            s1z=rvals['s1z'], s2z=rvals['s2z'],
-            phi_1=rvals['phi_1'], phi_2=rvals['phi_2'],
-            chi_p=rvals['chi_p'])
-        self.s1z_distr   = Arbitrary(s1z=rvals['s1z'],
-                                    bounds={'s1z':(-1,1)})
-        self.s2z_distr   = Arbitrary(s2z=rvals['s2z'],
-                                    bounds={'s2z':(-1,1)}) 
+            spin1z=rvals['spin1z'], spin2z=rvals['spin2z'],
+            phi1=rvals['phi1'], phi2=rvals['phi2'])
+        self.spin1z_distr   = Arbitrary(spin1z=rvals['spin1z'],
+                                    bounds={'spin1z':(-1,1)})
+        self.spin2z_distr   = Arbitrary(spin2z=rvals['spin2z'],
+                                    bounds={'spin2z':(-1,1)}) 
         self.zeta1_distr = Arbitrary(zeta1=rvals['zeta1'],
                                     bounds={'zeta1':(0,1)})
         self.zeta2_distr = Arbitrary(zeta2=rvals['zeta2'],
                                     bounds={'zeta2':(0,1)}) 
+
 
     def _constraints(self,values):
         """
@@ -694,13 +675,11 @@ class UniformChiPChiEffGamma(Arbitrary):
         bool
             Whether or not the values satisfy the physical constraints.
         """
-        mass1, mass2, phi_1, phi_2, s1z, s2z, zeta1, zeta2, _ = \
-            conversions.ensurearray(values['mass1'], values['mass2'],
-                                    values['phi_1'], values['phi_2'],
-                                    values['s1z'], values['s2z'],
+        spin1z, spin2z, zeta1, zeta2, _ = \
+            conversions.ensurearray(values['spin1z'], values['spin2z'],
                                     values['zeta1'], values['zeta2'])
-        test = ((s1z**2. + zeta1**2.) < 1.) & \
-               ((s2z**2. + zeta2**2.) < 1.)
+        test = ((spin1z**2. + zeta1**2.) < 1.) & \
+               ((spin2z**2. + zeta2**2.) < 1.)
 
         #if not numpy.all(test): 
         #    print("Constraints not fulfilled.")
@@ -717,6 +696,14 @@ class UniformChiPChiEffGamma(Arbitrary):
             return False 
         # After the individual distribution constraints apply the physical ones
         return self._constraints(params)
+ 
+    def _drawMasses(self,size=1,**kwargs):
+        """
+        Returns a tuple of mass vaues (mass1, mass2) or a tuple 
+        of arrays of size size (mass1,mass2) which will be used 
+        as samples for the mass.
+        """
+        pass 
 
     def _draw(self, size=1, **kwargs):
         """
@@ -724,22 +711,15 @@ class UniformChiPChiEffGamma(Arbitrary):
         """
         # draw angles
         try:
-            phi_1 = kwargs['phi_1']
+            phi1 = kwargs['phi1']
         except KeyError:
-            phi_1 = self.phi1_distr.rvs(size=size)['phi_1']
+            phi1 = self.phi1_distr.rvs(size=size)['phi1']
         try: 
-            phi_2 = kwargs['phi_2']
+            phi2 = kwargs['phi2']
         except KeyError:
-            phi_2 = self.phi2_distr.rvs(size=size)['phi_2']
+            phi2 = self.phi2_distr.rvs(size=size)['phi2']
         # draw masses 
-        try: 
-            mass1 = kwargs['mass1']
-        except KeyError:
-            mass1 = self.mass1_distr.rvs(size=size)['mass1']
-        try:
-            mass2 = kwargs['mass2']
-        except KeyError:
-            mass2 = self.mass2_distr.rvs(size=size)['mass2']
+        mass1, mass2 = self._drawMasses(size=size,**kwargs) 
         q = mass1 / mass2 
         primary_is_2 = mass1 < mass2 
         onesided_q = numpy.where(primary_is_2, 1/q, q)
@@ -770,8 +750,8 @@ class UniformChiPChiEffGamma(Arbitrary):
         primary_chi_z = (2*gamma_z-1)*primary_chi_z_bound 
         secondary_chi_z = (1+onesided_q)*chi_eff - onesided_q*primary_chi_z 
         # assign primary and secondary according to mass relationship. 
-        s1z = numpy.where(primary_is_2, secondary_chi_z, primary_chi_z) 
-        s2z = numpy.where(primary_is_2, primary_chi_z, secondary_chi_z)
+        spin1z = numpy.where(primary_is_2, secondary_chi_z, primary_chi_z) 
+        spin2z = numpy.where(primary_is_2, primary_chi_z, secondary_chi_z)
         zeta1 = numpy.where(primary_is_2, secondary_chi_perp, primary_chi_perp)
         zeta2 = numpy.where(primary_is_2, primary_chi_perp, secondary_chi_perp)
         # print for checks: At least zeta1 and zeta2 should be smaller than 1
@@ -785,13 +765,12 @@ class UniformChiPChiEffGamma(Arbitrary):
         arr = numpy.zeros(size, dtype=dtype)
         arr['mass1'] = mass1
         arr['mass2'] = mass2 
-        arr['phi_1'] = phi_1
-        arr['phi_2'] = phi_2 
-        arr['s1z'] = s1z
-        arr['s2z'] = s2z
+        arr['phi1'] = phi1
+        arr['phi2'] = phi2 
+        arr['spin1z'] = spin1z
+        arr['spin2z'] = spin2z
         arr['zeta1'] = zeta1 
         arr['zeta2'] = zeta2 
-        arr['chi_p'] = chi_p 
         self.drawn += size 
         return arr 
     
@@ -817,6 +796,85 @@ class UniformChiPChiEffGamma(Arbitrary):
         self.accepted =+ size 
         return arr
 
+
+class UniformQMChiPChiEff(UniformChiPChiEffGamma):
+    r"""A distribution that is sampled in :math:`\chi_{\mathrm{eff}}`, 
+    :math:`\chi_p`, q and m_total, such that the density stays 
+    constant with respect to these parameters inside the allowed 
+    parameter space. 
+
+    Keeping all other parameters fixed and varying only 
+    :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, q or m_total, 
+    the density will stay constant. This does not imply that the 
+    marginals of :math:`\chi_{\mathrm{eff}}` or :math:`\chi_p` 
+    are uniform, nor that the two parameters are independent.
+
+    Mass parameters will be saved as component masses.
+
+    Parameters
+    ----------
+    q : BoundedDist, Bounds, or tuple
+        The distribution or bounds to use for q. Must be either a 
+        BoundedDist giving the distribution on q, or bounds (as either
+        a Bounds instance or a tuple) giving the minimum and maximum 
+        values to use for q. If the latter, a Uniform distribution will
+        be used. 
+    m_total : BoundedDist, Bounds, or tuple
+        The distribution or bounds to use for m_total. Same Syntax as for q.
+    chi_eff : BoundedDist, Bounds or tuple; optional
+        The distribution or bounds to use for :math:`\chi_{eff}`. Syntax is the 
+        same as mass1, except that None may also be pased. In that case, 
+        `(-1,1)` will be used for the bounds of a uniform marginal.
+        Default is None. 
+    chi_p : BoundedDist, Bounds, or tuple; optional
+        The distribution or bounds to use for :math:`chi_p`. Syntax is the
+        same as mass1, except that None may also be passed. In that case,
+        `(0, 1)` will be used for the bounds. Default is None.
+        No checks are done for negative values in chi_p
+    nsamples : int, optional
+        The number of samples to use for the internal kde. The larger the 
+        number of samples, the more accurate the pdf will be, but the longer 
+        it will take to evaluate. Default is 10000.
+    seed : int, optional
+        Seed value to use for the number generator for the kde. The curret 
+        random state of numpy will be saved prior to setting the seed. After 
+        the samples are gneerated, the state will be set back to what it was.
+        If None provided, will use 0.
+    """
+    name = "uniform_q_mtotal_chip_chieff" 
+    
+    def __init__(self,q=None,m_total=None,**kwargs):
+        if isinstance(q, BoundedDist):
+            self.q_distr = q 
+        else: 
+            self.q_distr = Uniform(q=q) 
+        if isinstance(m_total, BoundedDist):
+            self.mtotal_distr = m_total
+        else: 
+            self.mtotal_distr = Uniform(m_total=m_total) 
+        super(UniformQMChiPChiEff, self).__init__(**kwargs)
+    
+    def _drawMasses(self,size=1,**kwargs):
+        """
+        Draw a sample for the masses.
+
+        Returns a tuple of mass vaues (mass1, mass2) or a tuple 
+        of arrays of size size (mass1,mass2) which will be used 
+        as samples for the mass.
+        Implements abstract function of base class.
+        """
+        try: 
+            q = kwargs['q'] 
+        except KeyError:
+            q = self.q_distr.rvs(size=size)['q'] 
+        try:
+            m_total = kwargs['m_total'] 
+        except KeyError:
+            m_total = self.mtotal_distr.rvs(size=size)['m_total']
+        mass1 = q/(1+q)*m_total 
+        mass2 = 1/(1+q)*m_total 
+        return mass1, mass2 
+
     @classmethod 
     def from_config(cls, cp, section, variable_args): 
         """
@@ -837,7 +895,126 @@ class UniformChiPChiEffGamma(Arbitrary):
         
         Returns 
         -------
-        UniformChiPChiEffGamma
+        UniformQMChiPChiEff
+            A distribution instance. 
+        """
+        tag = variable_args 
+        variable_args = variable_args.split(VARARGS_DELIM) 
+        print("Tag", tag) 
+        print("section", section) 
+        if not set(variable_args) >= set(cls._params): 
+            raise ValueError("Not all parameters used by this distribution "
+                             "included in tag portion of section name")
+        q = get_param_bounds_from_config(cp, section, tag, 'q') 
+        m_total = get_param_bounds_from_config(cp, section, tag, 'm_total') 
+        print("q",q)
+        print("m_total",m_total)
+        chi_eff = get_param_bounds_from_config(cp, section, tag, 'chi_eff')
+        chi_p = get_param_bounds_from_config(cp, section, tag, 'chi_p')
+        if cp.has_option('-'.join([section, tag]), 'nsamples'):
+            nsamples = int(cp.get('-'.join([section, tag]), 'nsamples'))
+        else:
+            nsamples = None
+        return cls(q=q,m_total=m_total, chi_eff=chi_eff, 
+                   chi_p=chi_p, nsamples=nsamples) 
+
+class UniformComponentMassesChiPChiEff(UniformChiPChiEffGamma):
+    r"""A distribution that is sampled in :math:`\chi_{\mathrm{eff}}`, 
+    :math:`\chi_p`, q and m_total, such that the density stays 
+    constant with respect to these parameters inside the allowed 
+    parameter space. 
+
+    Keeping all other parameters fixed and varying only 
+    :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, q or m_total, 
+    the density will stay constant. This does not imply that the 
+    marginals of :math:`\chi_{\mathrm{eff}}` or :math:`\chi_p` 
+    are uniform, nor that the two parameters are independent.
+
+    Mass parameters will be saved as component masses.
+
+    Parameters
+    ----------
+    mass1 : BoundedDist, Bounds, or tuple
+        The distribution or bounds to use for mass1. Must be either a 
+        BoundedDist giving the distribution on mass1, or bounds (as either
+        a Bounds instance or a tuple) giving the minimum and maximum 
+        values to use for mass1. If the latter, a Uniform distribution will
+        be used. 
+    mass2 : BoundedDist, Bounds, or tuple
+        The distribution or bounds to use for mass2. Same Syntax as for mass1.
+    chi_eff : BoundedDist, Bounds or tuple; optional
+        The distribution or bounds to use for :math:`\chi_{eff}`. Syntax is the 
+        same as mass1, except that None may also be pased. In that case, 
+        `(-1,1)` will be used for the bounds of a uniform marginal.
+        Default is None. 
+    chi_p : BoundedDist, Bounds, or tuple; optional
+        The distribution or bounds to use for :math:`chi_p`. Syntax is the
+        same as mass1, except that None may also be passed. In that case,
+        `(0, 1)` will be used for the bounds. Default is None.
+        No checks are done for negative values in chi_p
+    nsamples : int, optional
+        The number of samples to use for the internal kde. The larger the 
+        number of samples, the more accurate the pdf will be, but the longer 
+        it will take to evaluate. Default is 10000.
+    seed : int, optional
+        Seed value to use for the number generator for the kde. The curret 
+        random state of numpy will be saved prior to setting the seed. After 
+        the samples are gneerated, the state will be set back to what it was.
+        If None provided, will use 0.
+    """
+    name = "uniform_component_masses_chip_chieff" 
+
+    def __init__(self,mass1=None,mass2=None,**kwargs):
+        if isinstance(mass1, BoundedDist):
+            self.mass1_distr = mass1 
+        else: 
+            self.mass1_distr = Uniform(mass1=mass1) 
+        if isinstance(mass2, BoundedDist):
+            self.mass2_distr = mass2 
+        else: 
+            self.mass2_distr = Uniform(mass2=mass2) 
+        super(UniformComponentMassesChiPChiEff, self).__init__(**kwargs) 
+    
+    def _drawMasses(self, size=1, **kwargs):
+        """
+        Draw a sample for the masses. 
+
+        Returns a tuple of mass vaues (mass1, mass2) or a tuple 
+        of arrays of size size (mass1,mass2) which will be used 
+        as samples for the mass.
+        Implements abstract function of base class.
+        """
+        try: 
+            mass1 = kwargs['mass1']
+        except: 
+            mass1 = self.mass1_distr.rvs(size=size)['mass1'] 
+        try: 
+            mass2 = kwargs['mass2'] 
+        except: 
+            mass2 = self.mass2_distr.rvs(size=size)['mass2'] 
+        return mass1, mass2 
+    
+    @classmethod 
+    def from_config(cls, cp, section, variable_args): 
+        """
+        Returns a distribution based on a configuration file. The parameters 
+        for the distribution are retrieved from the section titled 
+        "[`section`-`variable_params`]" in the config file. 
+
+        Parameters
+        ----------
+        cp : pycbc.workflow.WorkflowConfigParser 
+            A pased configuration file that contains the distribution options.
+        section : str 
+            Name of the section in the configuration file. 
+        variable_args : str 
+            The names of the parameters for this distribution, separated by 
+            `prior.VARARGS_DELIM`. Theses must appear in the "tag" part 
+            of the section header. 
+        
+        Returns 
+        -------
+        UniformComponentMassesChiPChiEff
             A distribution instance. 
         """
         tag = variable_args

@@ -24,7 +24,7 @@ from pycbc.distributions import bounded
 import pycbc.transforms
 
 class Arbitrary(bounded.BoundedDist):
-    """A distribution constructed from a set of parameter values using a kde.
+    r"""A distribution constructed from a set of parameter values using a kde.
     Bounds may be optionally provided to limit the range.
 
     Parameters
@@ -175,7 +175,7 @@ class Arbitrary(bounded.BoundedDist):
 
     @staticmethod
     def get_kde_from_arrays(*arrays):
-        """Constructs a KDE from the given arrays.
+        r"""Constructs a KDE from the given arrays.
 
         \*arrays :
             Each argument should be a 1D numpy array to construct the kde from.
@@ -194,7 +194,7 @@ class Arbitrary(bounded.BoundedDist):
 
 
 class FromFile(Arbitrary):
-    """A distribution that reads the values of the parameter(s) from an hdf
+    r"""A distribution that reads the values of the parameter(s) from an hdf
     file, computes the kde to construct the pdf, and draws random variables
     from it.
 

@@ -615,65 +615,21 @@ def chi_p_from_chi1_perp_chi2_perp_q(chi1_perp,chi2_perp,q):
     B = (4 + 3*q)/(4*q**2 + 3*q)
     chi_p[mask] = numpy.maximum(chi2_perp[mask]*B[mask],chi1_perp[mask])
     mask2 = numpy.logical_not(mask)
-    # In this case B(1/q) = 1/B
+    # In this case B(1/q) = 1
     chi_p[mask2] = numpy.maximum(chi1_perp[mask2]/B[mask2],chi2_perp[mask2])
     return formatreturn(chi_p , input_is_array)
 
-def chi1_perp_from_chi_p_gamma_p(chi_p,gamma_p):
-    """Returns the in plane spin component for the first object.
+def spinx_from_chi_perp_phi(chi_perp,phi):
     """
-    chi_p, gamma_p, input_is_array = ensurearray(
-        chi_p, gamma_p)
-    chi1_perp = copy.copy(chi_p)
-    mask = gamma_p < 0.
-    chi1_perp[mask] *= (-1.)*gamma_p[mask]
-    return formatreturn(chi1_perp , input_is_array)
+    Returns the x-component of the spin.
+    """ 
+    return chi_perp * np.cos(phi) 
 
-def chi2_perp_from_chi_p_gamma_p_q(chi_p,gamma_p,q):
-    """Returns the in plane spin component for the second object.
+def spiny_from_chi_perp_phi(chi_perp,phi):
     """
-    chi_p, gamma_p, q, input_is_array = ensurearray(
-        chi_p, gamma_p, q)
-    chi2_perp_roof = copy.copy(chi_p) 
-    mask = gamma_p >= 0. 
-    chi2_perp_roof[mask] *= gamma_p[mask] 
-    B = (4*q**2 + 3*q)/(4 + 3*q)
-    return formatreturn(B * chi2_perp_roof , input_is_array) 
-
-def s1z_from_chi_eff_chi1_perp_chi2_perp_gamma_z_q(chi_eff,
-                        chi1_perp,chi2_perp,gamma_z,q):
-    """Returns the z component of the first spin.
-    """
-    s2z = s2z_from_chi_eff_chi1_perp_chi2_perp_gamma_z_q(chi_eff,
-                        chi1_perp,chi2_perp,gamma_z,q) 
-    A = ((1+q)*chi_eff)**2 - gamma_z*(q**2*(1-chi1_perp**2) 
-                                      + 1-chi2_perp**2)
-    s1z = A/(2*q*s2z)
-    return s1z   
-
-def s2z_from_chi_eff_chi1_perp_chi2_perp_gamma_z_q(chi_eff,
-                        chi1_perp,chi2_perp,gamma_z,q):
-    """Returns the z component of the second spin.
-    """
-    A = ((1+q)*chi_eff)**2 - gamma_z*(q**2*(1-chi1_perp**2) 
-                                      + 1-chi2_perp**2)
-    #----------: :-- Here (+ or -)
-    s2z = (-A/2 + numpy.sqrt(A**2/4 + 4*(1+q)*chi_eff))/2 
-    return s2z
-
-def A_from_q_chi_eff_gamma_z_chi1_perp_chi2_perp(q,chi_eff,
-                        gamma_z,chi1_perp,chi2_perp):
-    A = ((1+q)*chi_eff)**2 - gamma_z*(q**2*(1-chi1_perp**2) 
-                                      + 1-chi2_perp**2)
-    return A 
-
-def s2z_from_A_q_chi_eff(A,q,chi_eff):
-    s2z = (-A/2 - numpy.sqrt(A**2/4 + 4*(1+q)*chi_eff))/2 
-    return s2z 
-
-def s1z_from_A_q_s2z(A,q,s2z):
-    s1z = A/(2*q*s2z) 
-    return s1z
+    Return the y-component of the spin.
+    """ 
+    return chi_perp * np.sin(phi) 
 
 
 def dquadmon_from_lambda(lambdav):
@@ -1354,8 +1310,6 @@ __all__ = ['dquadmon_from_lambda', 'lambda_tilde', 'primary_mass',
            'optimal_dec_from_detector', 'optimal_ra_from_detector',
            'chi_eff_from_spherical', 'chi_p_from_spherical',
            'nltides_gw_phase_diff_isco',
-           'chi1_perp_from_chi_p_gamma_p','chi2_perp_from_chi_p_gamma_p_q',
-           's1z_from_chi_eff_chi1_perp_chi2_perp_gamma_z_q',
-           's2z_from_chi_eff_chi1_perp_chi2_perp_gamma_z_q',
-           'chi_p_from_chi1_perp_chi2_perp_q'
+           'chi_p_from_chi1_perp_chi2_perp_q',
+           'spinx_from_chi_perp_phi','spiny_from_chi_perp_phi'
           ]
