@@ -24,6 +24,7 @@ from pycbc.distributions.power_law import UniformPowerLaw, TruncatedPowerLaw
 from pycbc.distributions.arbitrary import Arbitrary
 from pycbc.distributions.bounded import get_param_bounds_from_config, \
     VARARGS_DELIM, BoundedDist
+import random
 
 class IndependentChiPChiEff(Arbitrary):
     r"""A distribution such that :math:`\chi_{\mathrm{eff}}` and
@@ -593,7 +594,7 @@ class UniformChiPChiEffGamma(Arbitrary):
     _params = ['mass1','mass2','zeta1','zeta2','spin1z','spin2z',
                'phi1','phi2']
     
-    def __init__(self, chi_eff=None, chi_p=None,
+    def __init__(self, mass1_bounds, mass2_bounds, chi_eff=None, chi_p=None,
                  nsamples=None, seed=None):
 
         # save the number of samples drawn by _draw 
@@ -644,6 +645,8 @@ class UniformChiPChiEffGamma(Arbitrary):
         bounds['zeta2'] = (0.,1. )
         bounds['spin1z'] = (-1.,1.)
         bounds['spin2z'] = (-1.,1.) 
+        bounds['mass1'] = mass1_bounds 
+        bounds['mass2'] = mass2_bounds 
         super(UniformChiPChiEffGamma, self).__init__(
             bounds=bounds,
             mass1=rvals['mass1'], mass2=rvals['mass2'], 
@@ -658,6 +661,16 @@ class UniformChiPChiEffGamma(Arbitrary):
                                     bounds={'zeta1':(0,1)})
         self.zeta2_distr = Arbitrary(zeta2=rvals['zeta2'],
                                     bounds={'zeta2':(0,1)}) 
+        self.mass1_distr = Arbitrary(mass1=rvals['mass1'],
+                                    bounds={'mass1':mass1_bounds}) 
+        self.mass2_distr = Arbitrary(mass2=rvals['mass2'],
+                                    bounds={'mass2':mass2_bounds}) 
+        self.distributions['mass1'] = self.mass1_distr 
+        self.distributions['mass2'] = self.mass2_distr 
+        self.distributions['spin1z']= self.spin1z_distr 
+        self.distributions['spin2z']= self.spin2z_distr 
+        self.distributions['zeta1'] = self.zeta1_distr 
+        self.distributions['zeta2'] = self.zeta2_distr 
 
 
     def _constraints(self,values):
@@ -755,6 +768,10 @@ class UniformChiPChiEffGamma(Arbitrary):
         zeta1 = numpy.where(primary_is_2, secondary_chi_perp, primary_chi_perp)
         zeta2 = numpy.where(primary_is_2, primary_chi_perp, secondary_chi_perp)
         # print for checks: At least zeta1 and zeta2 should be smaller than 1
+        if not numpy.all(zeta1>=0):
+            print("Zeta1 is smaller than 0") 
+        if not numpy.all(zeta2>=0):
+            print("Zeta2 is smaller than 0")
         if not numpy.all(zeta1<=1):
             print("Zeta1 is larger than 1") 
         if not numpy.all(zeta2<=1):
@@ -852,7 +869,12 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
             self.mtotal_distr = m_total
         else: 
             self.mtotal_distr = Uniform(m_total=m_total) 
-        super(UniformQMChiPChiEff, self).__init__(**kwargs)
+        q_bounds = self.q_distr.bounds['q']
+        m_total_bounds = self.mtotal_distr.bounds['m_total']
+        mass_bounds = (0,
+                       m_total_bounds[1]) # not optimal
+        super(UniformQMChiPChiEff, self).__init__(mass1_bounds=mass_bounds,
+            mass2_bounds=mass_bounds,**kwargs)
     
     def _drawMasses(self,size=1,**kwargs):
         """
@@ -871,8 +893,9 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
             m_total = kwargs['m_total'] 
         except KeyError:
             m_total = self.mtotal_distr.rvs(size=size)['m_total']
-        mass1 = q/(1+q)*m_total 
-        mass2 = 1/(1+q)*m_total 
+        primary_is_2 = numpy.random.randint(2,size=size)
+        mass1 = numpy.where(primary_is_2, 1/(1+q)*m_total, q/(1+q)*m_total)
+        mass2 = numpy.where(primary_is_2, q/(1+q)*m_total, 1/(1+q)*m_total)
         return mass1, mass2 
 
     @classmethod 
@@ -973,7 +996,10 @@ class UniformComponentMassesChiPChiEff(UniformChiPChiEffGamma):
             self.mass2_distr = mass2 
         else: 
             self.mass2_distr = Uniform(mass2=mass2) 
-        super(UniformComponentMassesChiPChiEff, self).__init__(**kwargs) 
+        mass1_bounds = self.mass1_distr.bounds['mass1']
+        mass2_bounds = self.mass2_distr.bounds['mass2']
+        super(UniformComponentMassesChiPChiEff, self).__init__(
+            mass1_bounds=mass1_bounds, mass2_bounds=mass2_bounds,**kwargs) 
     
     def _drawMasses(self, size=1, **kwargs):
         """

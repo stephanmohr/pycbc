@@ -623,13 +623,13 @@ def spinx_from_chi_perp_phi(chi_perp,phi):
     """
     Returns the x-component of the spin.
     """ 
-    return chi_perp * np.cos(phi) 
+    return chi_perp * numpy.cos(phi) 
 
 def spiny_from_chi_perp_phi(chi_perp,phi):
     """
     Return the y-component of the spin.
     """ 
-    return chi_perp * np.sin(phi) 
+    return chi_perp * numpy.sin(phi) 
 
 
 def dquadmon_from_lambda(lambdav):
