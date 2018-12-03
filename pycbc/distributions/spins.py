@@ -893,8 +893,7 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
             m_total = kwargs['m_total'] 
         except KeyError:
             m_total = self.mtotal_distr.rvs(size=size)['m_total']
-        # primary_is_2 = numpy.random.randint(2,size=size)
-        primary_is_2 = numpy.zeros(shape=size)
+        primary_is_2 = numpy.random.randint(2,size=size)
         mass1 = numpy.where(primary_is_2, 1./(1.+q)*m_total, q/(1.+q)*m_total)
         mass2 = numpy.where(primary_is_2, q/(1.+q)*m_total, 1./(1.+q)*m_total)
         return mass1, mass2 
