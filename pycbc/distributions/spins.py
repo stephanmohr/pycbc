@@ -893,9 +893,10 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
             m_total = kwargs['m_total'] 
         except KeyError:
             m_total = self.mtotal_distr.rvs(size=size)['m_total']
-        primary_is_2 = numpy.random.randint(2,size=size)
-        mass1 = numpy.where(primary_is_2, 1/(1+q)*m_total, q/(1+q)*m_total)
-        mass2 = numpy.where(primary_is_2, q/(1+q)*m_total, 1/(1+q)*m_total)
+        # primary_is_2 = numpy.random.randint(2,size=size)
+        primary_is_2 = numpy.zeros(shape=size)
+        mass1 = numpy.where(primary_is_2, 1./(1.+q)*m_total, q/(1.+q)*m_total)
+        mass2 = numpy.where(primary_is_2, q/(1.+q)*m_total, 1./(1.+q)*m_total)
         return mass1, mass2 
 
     @classmethod 
@@ -908,7 +909,7 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
         Parameters
         ----------
         cp : pycbc.workflow.WorkflowConfigParser 
-            A pased configuration file that contains the distribution options.
+            A parsed configuration file that contains the distribution options.
         section : str 
             Name of the section in the configuration file. 
         variable_args : str 
@@ -923,15 +924,11 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
         """
         tag = variable_args 
         variable_args = variable_args.split(VARARGS_DELIM) 
-        print("Tag", tag) 
-        print("section", section) 
         if not set(variable_args) >= set(cls._params): 
             raise ValueError("Not all parameters used by this distribution "
                              "included in tag portion of section name")
         q = get_param_bounds_from_config(cp, section, tag, 'q') 
         m_total = get_param_bounds_from_config(cp, section, tag, 'm_total') 
-        print("q",q)
-        print("m_total",m_total)
         chi_eff = get_param_bounds_from_config(cp, section, tag, 'chi_eff')
         chi_p = get_param_bounds_from_config(cp, section, tag, 'chi_p')
         if cp.has_option('-'.join([section, tag]), 'nsamples'):
@@ -959,7 +956,9 @@ class UniformComponentMassesChiPChiEff(UniformChiPChiEffGamma):
     ----------
     mass1 : BoundedDist, Bounds, or tuple
         The distribution or bounds to use for mass1. Must be either a 
-        BoundedDist giving the distribution on mass1, or bounds (as either
+
+        print("tparams ",self._tparams)
+        print("bounds ", self.bounds)        BoundedDist giving the distribution on mass1, or bounds (as either
         a Bounds instance or a tuple) giving the minimum and maximum 
         values to use for mass1. If the latter, a Uniform distribution will
         be used. 
