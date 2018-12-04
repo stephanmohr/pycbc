@@ -149,7 +149,12 @@ class EmceePTFile(MultiTemperedMCMCIO, MultiTemperedMetadataIO,
             The divergence of the posterior from the prior of the samples in 
             the file. 
         """
-        log_evidence = self.attrs['log_evidence']
+        try:
+            log_evidence = self.attrs['log_evidence']
+        except Exception as e:
+            logging.info("log_evidence not set for file in question. "
+                         "KL divergence can not be calculated.") 
+            raise e 
         # only use beta = 1
         try:
             beta1 = numpy.argwhere(self['sampler_info'].attrs['betas']==1)[0,0]

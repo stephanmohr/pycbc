@@ -299,14 +299,11 @@ class EmceePTSampler(MultiTemperedAutocorrSupport, MultiTemperedSupport,
         # now we can write the Kullback-Leibler divergence
         for fn in [self.checkpoint_file, self.backup_file]:
             with self.io(fn, "a") as fp: 
-                kl_divergence = fp.calculate_kl_divergence()
-                fp.write_kl_divergence(kl_divergence) 
-                '''
                 try: 
                     kl_divergence = fp.calc_kl_divergence()
                     fp.write_kl_divergence(kl_divergence) 
-                except Error as e: 
+                except Exception as e: 
+                    logging.info("Skipping calculation of kl divergence")
                     # Can happen for various reasons.
                     # Logged in calculate. Log all? 
                     raise e 
-                '''
