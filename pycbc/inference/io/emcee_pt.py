@@ -22,6 +22,7 @@ import h5py, numpy
 from .base_hdf import BaseInferenceFile
 from .base_multitemper import (MultiTemperedMetadataIO, MultiTemperedMCMCIO)
 from .posterior import PosteriorFile
+import logging 
 
 
 class EmceePTFile(MultiTemperedMCMCIO, MultiTemperedMetadataIO,
@@ -117,3 +118,57 @@ class EmceePTFile(MultiTemperedMCMCIO, MultiTemperedMetadataIO,
             fvalue = self[self.samples_group][field_name][:]
             thin = fvalue[0,:,self.thin_start:self.thin_end:self.thin_interval]
             s[field_name] = thin.flatten()
+    
+    def calculate_kl_divergence(self, indint=None, indstart=None):
+        """
+        Calculates the Kullback-Leibler divergence. 
+
+        Divergence is given by :math:`\int d \theta p(\theta \vert D M) 
+        log(\frac{p(\theta \vert D M)}{\p(\theta \vert M)})` where :math:`\theta` 
+        are the parameters, :math:`D` is the data and :math:`M` represents
+        the model. That means the divergence is the expectation with respect 
+        to the posterior of the logarithm of posterior density over prior density. 
+
+        This can be rewritten to :math:`\langle log(p(D \vert \theta M)) \rangle 
+         - log(p(D \vert M))`, where the mean is again taken with respect to
+        the posterior distribution.
+
+        Parameters
+        ----------
+        indint : int > 0 
+            Index interval that should be used for mean calculation.
+            If None, uses auto correlation length. Default is None.
+        indstart : int > 0
+            Start index that should be used for mean calculation.
+            If None, tries to use first iteration at which sampler has burned in.
+            Default is None. 
+
+        Returns 
+        -------
+        float 
+            The divergence of the posterior from the prior of the samples in 
+            the file. 
+        """
+        log_evidence = self.attrs['log_evidence']
+        # only use beta = 1
+        try:
+            beta1 = numpy.argwhere(self['sampler_info'].attrs['betas']==1)[0,0]
+        except IndexError:
+            logging.info("No samples for temperature 1 are present") 
+            raise ValueError("Divergence could not be calculated") 
+        if indint is None: 
+            indint = int(self['sampler_info'].attrs['acl'])
+        if indstart is None: 
+            try: 
+                indstart = self['sampler_info'].attrs['burn_in_iteration'] 
+            except KeyError:
+                logging.info("Sampler has not burned in yet. " 
+                      "Start index must be given explicitely to calculate divergence.")
+                raise ValueError("Divergence could not be calculated")
+        mean_logl = self['samples']['loglikelihood'][beta1,:,indstart::indint].mean()
+        return mean_logl - log_evidence 
+
+    def write_kl_divergence(self,kl_divergence):
+        """Writes the kl_divergence to the file. 
+        """ 
+        self.attrs['kl_divergence'] = kl_divergence 
