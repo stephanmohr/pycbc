@@ -678,10 +678,6 @@ def create_multidim_plot(parameters, samples, labels=None,
             plt = ax.scatter(x=samples[px], y=samples[py], c=zvals, s=5,
                              edgecolors='none', vmin=vmin, vmax=vmax,
                              cmap=scatter_cmap, alpha=alpha, zorder=2)
-            if not (mark_point is None):
-                ax.scatter(x=mark_point[px], y=mark_point[py], 
-                           c=mark_point_color, s=10, 
-                           edgecolors='none',alpha=alpha)
 
         if plot_contours or plot_density:
             # Exclude out-of-bound regions
@@ -700,6 +696,12 @@ def create_multidim_plot(parameters, samples, labels=None,
                 exclude_region=exclude_region, ax=ax,
                 use_kombine=use_kombine)
 
+        if mark_point is not None: 
+            ax.scatter(x=mark_point[px], y=mark_point[py],
+                       c=mark_point_color, s=30,
+                       edgecolors='none',alpha=alpha,
+                       zorder=1000) 
+                
         if expected_parameters is not None:
             try:
                 ax.axvline(expected_parameters[px], lw=1.5,
