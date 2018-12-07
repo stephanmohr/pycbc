@@ -36,6 +36,7 @@ import h5py
 
 from pycbc.io import FieldArray
 from pycbc.inject import InjectionSet
+from pycbc import transforms as _transforms 
 
 class BaseInferenceFile(h5py.File):
     """Base class for all inference hdf files.
@@ -772,3 +773,71 @@ class BaseInferenceFile(h5py.File):
                 cls.write_kwargs_to_attrs(attrs, **val)
             else:
                 attrs[arg] = val
+    
+    def get_maximum_likelihood_index(self):
+        """ 
+        If the file has a 'samples'.'log_likelihood' member,
+        return the argument at which this reaches its maximum.
+        If the member doesn't exist, return None.
+        
+        Returns
+        -------
+        int or tuple of ints or None
+            Returns an int if each column of samples has only 
+            one index, otherwise returns the necessary indices
+            as a tuple.
+        """
+        ind = numpy.argmax(self[self.samples_group]['loglikelihood']) 
+        ind = numpy.unravel_index(ind, 
+                        self[self.samples_group]['loglikelihood'].shape)
+        return ind 
+    
+    def maximum_likelihood_sample_from_cli(self,opts,parameters=None,
+                                           array_class=None):
+        """
+        Reads the sample with maximum likelihood from given 
+        command-line options. 
+
+        Parameters
+        ----------
+        opts : argpargse Namespace 
+            The options with the settings to use for loading samples (the sort 
+            of thing returned by ``ArgumentParser().parse_args``). 
+        parameters : (list of) str, optional
+            A list of the parameters to load. If none provided, will try to 
+            get the parameters to load from ``opts.parameters``. 
+        array_class : FieldArray-like class, optional
+            The type of array to return. The class must have ``from_kwargs`` 
+            and ``parse_parameters`` methods. If None, will return a 
+            ``FieldArray``. 
+        
+        Returns
+        -------
+        FieldArray : 
+            Array of the loaded sample
+        """
+        if array_class is None:
+            array_class = FieldArray
+        if parameters is None and opts.parameters is None: 
+            parameters = self.variable_args 
+        elif parameters is None:
+            parameters = opts.parameters 
+        # get the names of fields needed for the given parameters 
+        file_parameters, ts = _transforms.get_common_cbc_transforms(
+            parameters, self.variable_parameters)
+        possible_fields = self[self.samples_group].keys()  
+        # isn't that the same as self.variable_parameters ??????? ????????????
+        loadfields = array_class.parse_parameters(file_parameters, possible_fields) 
+        # load the index 
+        ind = self.get_maximum_likelihood_index() 
+        # load the sample 
+        samples = dict() 
+        for param in loadfields: 
+            samples[param] = numpy.array(self[self.samples_group][param][ind])
+        # convert to FieldArray 
+        samples = array_class.from_kwargs(**samples) 
+        samples = _transforms.apply_transforms(samples, ts) 
+        # add the static params 
+        for (p, val) in self.static_params.items():
+            setattr(samples, p, val) 
+        return samples 

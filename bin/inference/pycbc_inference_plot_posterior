@@ -54,6 +54,9 @@ parser.add_argument("--output-file", type=str, required=True,
                     help="Output plot path.")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Be verbose")
+parser.add_argument("--plot_max_likelihood", action="store_true", 
+                    defaul=False, help="Mark the sample with maximum " +\
+                    "likelihood in a separate color.")
 # add options for what plots to create
 option_utils.add_plot_posterior_option_group(parser)
 # scatter configuration
@@ -81,10 +84,19 @@ if opts.z_arg is not None:
     zvals = []
     for fp in fps:
         zsamples = fp.samples_from_cli(opts, parameters=opts.z_arg)
-        zvals.append(zsamples[opts.z_arg])
+        zvalsappend(zsamples[opts.z_arg])
 else:
     zvals = None
     zlbl = None
+
+# Get the maximum likelihood samples
+if opts.plot_max_likelihood:
+    max_likelihood_samples = []
+    for fp in fps:
+        max_likelihood_samples.append(
+            fp.maximum_likelihood_sample_from_cli(opts))
+else: 
+    max_likelihood_samples = None 
 
 # closet the files, we don't need them anymore
 for fp in fps:
@@ -187,7 +199,8 @@ for (i, s) in enumerate(samples):
                     use_kombine=opts.use_kombine_kde,
                     mins=mins, maxs=maxs,
                     expected_parameters=expected_parameters,
-                    expected_parameters_color=opts.expected_parameters_color)
+                    expected_parameters_color=opts.expected_parameters_color,
+                    mark_point=max_likelihood_samples[i])
 
 # add legend to upper right for input files
 if len(opts.input_file) > 1:

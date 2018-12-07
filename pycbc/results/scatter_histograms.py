@@ -296,7 +296,8 @@ def create_marginalized_hist(ax, values, label, percentiles=None,
                              color='k', fillcolor='gray', linecolor='navy',
                              title=True, expected_value=None,
                              expected_color='red', rotated=False,
-                             plot_min=None, plot_max=None):
+                             plot_min=None, plot_max=None,
+                             mark_point=None,mark_point_color='blue'):
     """Plots a 1D marginalized histogram of the given param from the given
     samples.
 
@@ -488,7 +489,8 @@ def create_multidim_plot(parameters, samples, labels=None,
                          density_cmap='viridis',
                          contour_color=None, hist_color='black',
                          line_color=None, fill_color='gray',
-                         use_kombine=False, fig=None, axis_dict=None):
+                         use_kombine=False, fig=None, axis_dict=None,
+                         mark_point=None, mark_point_color='blue'):
     """Generate a figure with several plots and histograms.
 
     Parameters
@@ -554,6 +556,10 @@ def create_multidim_plot(parameters, samples, labels=None,
     use_kombine : {False, bool}
         Use kombine's KDE to calculate density. Otherwise, will use
         `scipy.stats.gaussian_kde.` Default is False.
+    mark_point : np.array of type 
+        The point which to mark. All plotted parameters must be given 
+    mark_point_color : {'blue',string}
+        The color in which to plot the special point. 
 
     Returns
     -------
@@ -597,6 +603,8 @@ def create_multidim_plot(parameters, samples, labels=None,
     # convert samples to a dictionary to avoid re-computing derived parameters
     # every time they are needed
     samples = dict([[p, samples[p]] for p in parameters])
+    if not (mark_point is None):
+        mark_point = dict([[p, mark_point[p]] for p in parameters]) 
 
     # values for axis bounds
     if mins is None:
@@ -648,13 +656,14 @@ def create_multidim_plot(parameters, samples, labels=None,
                     expected_value = None
             else:
                 expected_value = None
+            mark_param = mark_point[param] if mark_point is not None else None
             create_marginalized_hist(
                 ax, samples[param], label=labels[param],
                 color=hist_color, fillcolor=fill_color, linecolor=line_color,
                 title=True, expected_value=expected_value,
                 expected_color=expected_parameters_color,
                 rotated=rotated, plot_min=mins[param], plot_max=maxs[param],
-                percentiles=marginal_percentiles)
+                percentiles=marginal_percentiles,mark_point=mark_param)
 
     # Off-diagonals...
     for px, py in axis_dict:
@@ -669,6 +678,10 @@ def create_multidim_plot(parameters, samples, labels=None,
             plt = ax.scatter(x=samples[px], y=samples[py], c=zvals, s=5,
                              edgecolors='none', vmin=vmin, vmax=vmax,
                              cmap=scatter_cmap, alpha=alpha, zorder=2)
+            if not (mark_point is None):
+                ax.scatter(x=mark_point[px], y=mark_point[py], 
+                           c=mark_point_color, s=10, 
+                           edgecolors='none',alpha=alpha)
 
         if plot_contours or plot_density:
             # Exclude out-of-bound regions
