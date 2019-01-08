@@ -54,8 +54,8 @@ parser.add_argument("--output-file", type=str, required=True,
                     help="Output plot path.")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Be verbose")
-parser.add_argument("--plot_max_likelihood", action="store_true", 
-                    defaul=False, help="Mark the sample with maximum " +\
+parser.add_argument("--plot-max-likelihood", action="store_true", 
+                    default=False, help="Mark the sample with maximum "
                     "likelihood in a separate color.")
 # add options for what plots to create
 option_utils.add_plot_posterior_option_group(parser)
@@ -84,7 +84,7 @@ if opts.z_arg is not None:
     zvals = []
     for fp in fps:
         zsamples = fp.samples_from_cli(opts, parameters=opts.z_arg)
-        zvalsappend(zsamples[opts.z_arg])
+        zvals.append(zsamples[opts.z_arg])
 else:
     zvals = None
     zlbl = None
@@ -214,7 +214,7 @@ if len(opts.input_file) > 1:
                labels=labels)
 
 # set DPI
-fig.set_dpi(200)
+fig.set_dpi(500)
 
 # save
 metadata.save_fig_with_metadata(

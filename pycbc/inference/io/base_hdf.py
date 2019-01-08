@@ -824,7 +824,7 @@ class BaseInferenceFile(h5py.File):
             parameters = opts.parameters 
         # get the names of fields needed for the given parameters 
         file_parameters, ts = _transforms.get_common_cbc_transforms(
-            parameters, self.variable_parameters)
+            parameters, self.variable_params)
         possible_fields = self[self.samples_group].keys()  
         # isn't that the same as self.variable_parameters ??????? ????????????
         loadfields = array_class.parse_parameters(file_parameters, possible_fields) 
