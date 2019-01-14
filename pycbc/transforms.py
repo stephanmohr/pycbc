@@ -412,6 +412,77 @@ class MchirpQToMass1Mass2(BaseTransform):
         m2 = maps[parameters.mass2]
         return conversions.mchirp_from_mass1_mass2(m1, m2)/m2**2.
 
+class MchirpQToMtotalQ(BaseTransform):
+    """ Converts chirp mass and mass ratio to total mass and mass ratio
+    """
+    name = "mchirp_q_to_mtotal_q"
+    _inputs = [parameters.mchirp, parameters.q]
+    _outputs = [parameters.mtotal, parameters.q]
+
+    def transform(self, maps):
+        """This function transforms from chirp mass and mass ratio to 
+        total mass and mass ratio. 
+
+        Parameters
+        ----------
+        maps : a mapping object
+
+        Examples
+        --------
+        Convert a dict of numpy.array:
+
+        >>> import numpy 
+        >>> from pycbc import transforms
+        >>> t = transforms.MchirpQToMtotalQ()
+        >>> t.transform
+
+        Returns
+        -------
+        out : dict 
+            A dict with key as parameters name and value as numpy.array or float 
+            of transformed values.
+        """
+        out = {}
+        out[parameters.mtotal] = conversions.mtotal_from_mchirp_q(
+                                                maps[parameters.mchirp],
+                                                maps[parameters.q])
+        out[parameters.q]      = maps[parameters.q]
+        return self.format_output(maps, out)
+    
+    def inverse_transform(self, maps):
+        """This function transforms from total mass and mass ratio to chirp mass
+        and mass ratio.
+
+        Parameters
+        ----------
+        maps : a mapping object
+
+        Returns
+        -------
+        out : dict 
+            A dict with parameter names as keys and numpy.array or float of 
+            transformed values as values.
+        """
+        out = {}
+        out[parameters.mchirp] = conversions.mchirp_from_mtotal_q(
+                                                maps[parameters.mtotal],
+                                                maps[parameters.q])
+        out[parameters.q]      = maps[parameters.q] 
+        return self.format_output(maps, out) 
+    
+    def jacobian(self, maps):
+        """Returns the Jacobian for transforming mchirp and q to mtotal and q
+        """
+        q = maps[parameters.q]
+        return (q / (1+q)**2) ** (3./5)
+    
+    def inverse_jacobian(self, maps):
+        """Returns the Jacobian for transforming mtotal and q to 
+        mchirp and q.
+        """
+        q = maps[parameters.q] 
+        return ((1+q)**2 / q) ** (3./5)
+
 class MchirpEtaToMass1Mass2(BaseTransform):
     """ Converts chirp mass and symmetric mass ratio to component masses.
     """
@@ -1233,6 +1304,18 @@ class Mass1Mass2ToMchirpQ(MchirpQToMass1Mass2):
     jacobian = inverse.inverse_jacobian
     inverse_jacobian = inverse.jacobian
 
+class MtotalQToMchirpQ(MchirpQToMtotalQ):
+    """The inverse of MchirpQToMtotalQ
+    """
+    name = "mtotal_q_to_mchirp_q"
+    inverse = MchirpQToMtotalQ 
+    _inputs = inverse._outputs 
+    _outputs = inverse._inputs 
+    transform = inverse.inverse_transform 
+    inverse_transform = inverse.transform 
+    jacobian = inverse.inverse_jacobian
+    inverse_jacobian = inverse.jacobian 
+
 class Mass1Mass2ToMchirpEta(MchirpEtaToMass1Mass2):
     """The inverse of MchirpEtaToMass1Mass2.
     """
@@ -1480,6 +1563,8 @@ transforms = {
     CustomTransform.name : CustomTransform,
     MchirpQToMass1Mass2.name : MchirpQToMass1Mass2,
     Mass1Mass2ToMchirpQ.name : Mass1Mass2ToMchirpQ,
+    MchirpQToMtotalQ.name : MchirpQToMtotalQ,
+    MtotalQToMchirpQ.name : MtotalQToMchirpQ,
     Mass1Mass2ToMchirpEta.name : Mass1Mass2ToMchirpEta,
     ChirpDistanceToDistance.name : ChirpDistanceToDistance,
     DistanceToChirpDistance.name : DistanceToChirpDistance,
