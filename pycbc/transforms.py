@@ -417,7 +417,7 @@ class MchirpQToMtotalQ(BaseTransform):
     """
     name = "mchirp_q_to_mtotal_q"
     _inputs = [parameters.mchirp, parameters.q]
-    _outputs = [parameters.mtotal, parameters.q]
+    _outputs = ['mtotal', parameters.q]
 
     def transform(self, maps):
         """This function transforms from chirp mass and mass ratio to 
@@ -443,7 +443,7 @@ class MchirpQToMtotalQ(BaseTransform):
             of transformed values.
         """
         out = {}
-        out[parameters.mtotal] = conversions.mtotal_from_mchirp_q(
+        out['mtotal'] = conversions.mtotal_from_mchirp_q(
                                                 maps[parameters.mchirp],
                                                 maps[parameters.q])
         out[parameters.q]      = maps[parameters.q]
@@ -465,7 +465,7 @@ class MchirpQToMtotalQ(BaseTransform):
         """
         out = {}
         out[parameters.mchirp] = conversions.mchirp_from_mtotal_q(
-                                                maps[parameters.mtotal],
+                                                maps['mtotal'],
                                                 maps[parameters.q])
         out[parameters.q]      = maps[parameters.q] 
         return self.format_output(maps, out) 
