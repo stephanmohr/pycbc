@@ -1751,17 +1751,19 @@ def order_transforms(transforms):
         List of transformed ordered such that forward transforms can be carried
         out without error.
     """
-    # get a set of all inputs and all outputs
-    outputs = set().union(*[t.outputs for t in transforms])
+    # get a set of outputs of all transformation that are not 
+    # required as an input by the same transformation.
+    effective_outputs = set().union(*[set(t.outputs) - set(t.inputs)
+                                      for t in transforms])
     out = []
     remaining = [t for t in transforms]
     while remaining:
         # pull out transforms that have no inputs in the set of outputs
         leftover = []
         for t in remaining:
-            if t.inputs.isdisjoint(outputs):
+            if t.inputs.isdisjoint(effective_outputs):
                 out.append(t)
-                outputs -= t.outputs
+                effective_outputs -= t.outputs
             else:
                 leftover.append(t)
         remaining = leftover
