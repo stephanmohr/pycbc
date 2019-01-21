@@ -18,6 +18,7 @@ from pycbc import version as pycbc_version
 from pycbc.tmpltbank import return_search_summary
 from pycbc.tmpltbank import return_empty_sngl
 from pycbc import events, conversions, pnutils
+from pycbc.events.stat import sngl_statistic_dict
 
 class HFile(h5py.File):
     """ Low level extensions to the capabilities of reading an hdf5 File
@@ -167,13 +168,26 @@ class DictArray(object):
             data[k] = np.delete(self.data[k], idx)
         return self._return(data=data)
 
+    def save(self, outname):
+        f = HFile(outname, "w")
+        for k in self.attrs:
+            f.attrs[k] = self.attrs[k]
+
+        for k in self.data:
+            f.create_dataset(k, data=self.data[k],
+                      compression='gzip',
+                      compression_opts=9,
+                      shuffle=True)
+        f.close()
+
 
 class StatmapData(DictArray):
-    def __init__(self, data=None, seg=None, attrs=None,
-                       files=None):
-        groups = ['stat', 'time1', 'time2', 'trigger_id1', 'trigger_id2',
-               'template_id', 'decimation_factor', 'timeslide_id']
-        super(StatmapData, self).__init__(data=data, files=files, groups=groups)
+    def __init__(self, data=None, seg=None, attrs=None, files=None,
+                 groups=('stat', 'time1', 'time2', 'trigger_id1',
+                         'trigger_id2', 'template_id', 'decimation_factor',
+                         'timeslide_id')):
+        super(StatmapData, self).__init__(data=data, files=files,
+                                          groups=groups)
 
         if data:
             self.seg=seg
@@ -200,21 +214,46 @@ class StatmapData(DictArray):
         return self.select(cid)
 
     def save(self, outname):
-        f = HFile(outname, "w")
-        for k in self.attrs:
-            f.attrs[k] = self.attrs[k]
+        super(StatmapData, self).save(outname)
+        with HFile(outname, "w") as f:
+            for key in self.seg.keys():
+                f['segments/%s/start' % key] = self.seg[key]['start'][:]
+                f['segments/%s/end' % key] = self.seg[key]['end'][:]
 
-        for k in self.data:
-            f.create_dataset(k, data=self.data[k],
-                      compression='gzip',
-                      compression_opts=9,
-                      shuffle=True)
+class MultiifoStatmapData(StatmapData):
+    def __init__(self, data=None, seg=None, attrs=None,
+                       files=None, ifos=None):
+        groups = ['stat', 'template_id', 'decimation_factor', 'timeslide_id']
+        for ifo in ifos:
+            groups += ['%s/time' % ifo]
+            groups += ['%s/trigger_id' % ifo]
 
+        super(MultiifoStatmapData, self).__init__(data=data, files=files,
+                                                  groups=groups, attrs=attrs, seg=seg)
 
-        for key in self.seg.keys():
-            f['segments/%s/start' % key] = self.seg[key]['start'][:]
-            f['segments/%s/end' % key] = self.seg[key]['end'][:]
-        f.close()
+    def _return(self, data):
+        ifolist = self.attrs['ifos'].split(' ')
+        return self.__class__(data=data, attrs=self.attrs, seg=self.seg,
+                              ifos=ifolist)
+
+    def cluster(self, window):
+        """ Cluster the dict array, assuming it has the relevant Coinc colums,
+        time1, time2, stat, and timeslide_id
+        """
+        # If no events, do nothing
+        pivot_ifo = self.attrs['pivot']
+        fixed_ifo = self.attrs['fixed']
+        if len(self.data['%s/time' % pivot_ifo]) == 0 or len(self.data['%s/time' % fixed_ifo]) == 0:
+            return self
+        from pycbc.events import cluster_coincs
+        interval = self.attrs['timeslide_interval']
+        cid = cluster_coincs(self.stat,
+                             self.data['%s/time' % pivot_ifo],
+                             self.data['%s/time' % fixed_ifo],
+                             self.timeslide_id,
+                             interval,
+                             window)
+        return self.select(cid)
 
 class FileData(object):
 
@@ -400,24 +439,19 @@ class SingleDetTriggers(object):
         clustered so that no more than 1 event within +/- cluster-window will
         be considered."""
         # If this becomes memory intensive we can optimize
+        stat_instance = sngl_statistic_dict[ranking_statistic]([])
+        stat = stat_instance.single(self.trigs)[self.mask]
+
+        # Used for naming in plots ... Seems an odd place for this to live!
         if ranking_statistic == "newsnr":
-            stat = self.newsnr
-            # newsnr doesn't return an array if len(stat) == 1
-            if len(self.snr) == 1:
-                stat = np.array([stat])
             self.stat_name = "Reweighted SNR"
         elif ranking_statistic == "newsnr_sgveto":
-            stat = self.newsnr_sgveto
-            # newsnr doesn't return an array if len(stat) == 1
-            if len(self.snr) == 1:
-                stat = np.array([stat])
             self.stat_name = "Reweighted SNR (+sgveto)"
         elif ranking_statistic == "snr":
-            stat = self.snr
             self.stat_name = "SNR"
         else:
-            err_msg = "Don't recognize statistic %s." % (ranking_statistic)
-            raise ValueError(err_msg)
+            self.stat_name = ranking_statistic
+
         times = self.end_time
         index = stat.argsort()[::-1]
         new_times = []
@@ -825,7 +859,7 @@ def get_chisq_from_file_choice(hdfile, chisq_choice):
     elif chisq_choice == 'max_bank_cont_trad':
         chisq = np.maximum(np.maximum(bank_chisq, cont_chisq), trad_chisq)
     else:
-        err_msg="Do not recognized --chisq-choice %s" % chisq_choice
+        err_msg = "Do not recognize --chisq-choice %s" % chisq_choice
         raise ValueError(err_msg)
     return chisq
 
@@ -859,4 +893,3 @@ def recursively_save_dict_contents_to_group(h5file, path, dic):
             recursively_save_dict_contents_to_group(h5file, path + key + '/', item)
         else:
             raise ValueError('Cannot save %s type'%type(item))
-
