@@ -839,7 +839,7 @@ class BaseInferenceFile(h5py.File):
             samples = self.average_walkers(samples)
             if mode == 'natural':
                 acl = autocorrelation.calculate_acl(samples)
-            elif mode == 'convex:
+            elif mode == 'convex':
                 acl = autocorrelation.calculate_convex_acl(samples)
         except KeyError as e:
             print("Possible parameters are: ", self.variable_params) 
