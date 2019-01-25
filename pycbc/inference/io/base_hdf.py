@@ -909,7 +909,7 @@ class BaseInferenceFile(h5py.File):
             samples = self.read_raw_samples(
                 param, thin_start=thin_start, thin_interval=1, 
                 thin_end=thin_end, flatten=False)[param]
-            print("samples.shape is " = str(samples.shape)) 
+            print("samples.shape is " + str(samples.shape)) 
             samples = self.average_walkers(samples)
             std_dev = self.std_dev_walkers(samples)
             axs[i].plot(samples) 
