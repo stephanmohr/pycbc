@@ -853,6 +853,7 @@ class BaseInferenceFile(h5py.File):
                 acl = autocorrelation.calculate_convex_acl(samples)
         except KeyError as e:
             print("Possible parameters are: ", self.variable_params) 
+            raise e 
         return acl 
     
     def plot_acfs(self, parameters, nsets=5):
@@ -887,7 +888,7 @@ class BaseInferenceFile(h5py.File):
                 axs[i].legend()
             fig.savefig('autocorrelation_of_' + str(param)) 
     
-    def plot_means(self, parameters, thin_start=0, thin_end=None):
+    def plot_means(self, parameters=None, thin_start=0, thin_end=None):
         """
         Makes a plot of the movement of the ensemble mean.
         """
@@ -904,9 +905,11 @@ class BaseInferenceFile(h5py.File):
         fig3, axs3=plt.subplots(len(parameters), sharex=True,
                                 figsize=(5, len(parameters)*2.5+1))
         for i,param in enumerate(parameters):
+            print("doing " + str(param)) 
             samples = self.read_raw_samples(
                 param, thin_start=thin_start, thin_interval=1, 
                 thin_end=thin_end, flatten=False)[param]
+            print("samples.shape is " = str(samples.shape)) 
             samples = self.average_walkers(samples)
             std_dev = self.std_dev_walkers(samples)
             axs[i].plot(samples) 
