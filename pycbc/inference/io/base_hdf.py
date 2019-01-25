@@ -914,7 +914,7 @@ class BaseInferenceFile(h5py.File):
             std_dev = self.std_dev_walkers(samples)
             axs[i].plot(means) 
             axs[i].set_title("Ensemble average of " + str(param))
-            fdata = TimeSeries(means).to_frequencyseries()
+            fdata = TimeSeries(means, delta_t=1.0).to_frequencyseries()
             axs2[i].plot(fdata)
             axs2[i].set_title("Fourier transformed ensemble average of " + str(param))
             axs[3].plot(std_dev)
