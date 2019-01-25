@@ -34,6 +34,8 @@ import numpy
 
 import h5py
 
+import matplotlib 
+matplotlib.use('agg')
 import matplotlib.pyplot as plt 
 
 from pycbc.io import FieldArray
