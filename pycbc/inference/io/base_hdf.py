@@ -803,9 +803,9 @@ class BaseInferenceFile(h5py.File):
                 thin_end = self['samples'][param].shape[-1]
                 print("Using thin_end = ", thin_end)
             samples = self.read_raw_samples(
-                param, thin_start=thin_start, thin_interval=thin_end, 
+                param, thin_start=thin_start, thin_interval=1, 
                 thin_end=thin_end, flatten=False)[param] 
-            samples = average_walkers(samples)
+            samples = self.average_walkers(samples)
             acf = autocorrelation.calculate_acf(samples)
         except KeyError as e:
             raise e
@@ -834,12 +834,12 @@ class BaseInferenceFile(h5py.File):
                 thin_end = self['samples'][param].shape[-1]
                 print("Using thin_end = ", thin_end)
             samples = self.read_raw_samples(
-                param, thin_start=0, thin_interval=1, thin_end=thin_end, 
-                flatten=False)[param]
-            samples = average_walkers(samples)
+                param, thin_start=thin_start, thin_interval=1, 
+                thin_end=thin_end, flatten=False)[param]
+            samples = self.average_walkers(samples)
             if mode == 'natural':
                 acl = autocorrelation.calculate_acl(samples)
-            elif mode == 'covariance':
+            elif mode == 'convex:
                 acl = autocorrelation.calculate_convex_acl(samples)
         except KeyError as e:
             print("Possible parameters are: ", self.variable_params) 
