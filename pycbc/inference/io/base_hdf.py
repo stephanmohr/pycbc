@@ -41,6 +41,8 @@ import matplotlib.pyplot as plt
 from pycbc.io import FieldArray
 from pycbc.inject import InjectionSet
 from pycbc.filter import autocorrelation
+from pycbc.types import FrequencySeries, TimeSeries, zeros 
+from pycbc.filter.matchedfilter import correlate 
 
 class BaseInferenceFile(h5py.File):
     """Base class for all inference hdf files.
@@ -783,6 +785,12 @@ class BaseInferenceFile(h5py.File):
         """Returns the samples averaged over the walkers
         """
         pass 
+    
+    @abstractmethod
+    def std_dev_walkers(self, samples):
+        """Returns the estimated ensemble standard deviation
+        """
+        pass 
 
     def get_acf_for_time(self, param, thin_start=0, thin_end=None):
         """Returns the acf for the selected parameter, where only the first T samples 
@@ -864,7 +872,7 @@ class BaseInferenceFile(h5py.File):
         if isinstance(parameters, str):
             parameters = [parameters]
         elif parameters is None:
-            parameters = self.vairable_params 
+            parameters = self.variable_params 
         for param in parameters: 
             n = self['samples'][param].shape[-1]
             fig, axs = plt.subplots(nsets, sharex=True, sharey=True, figsize=(8,8))
@@ -877,4 +885,37 @@ class BaseInferenceFile(h5py.File):
                 axs[i].axvline(acl, label='summed natural estimators')
                 axs[i].set_title("Number of samples: " + str(thin_end)) 
                 axs[i].legend()
-            fig.savefig('autocorrelation of ' + str(param)) 
+            fig.savefig('autocorrelation_of_' + str(param)) 
+    
+    def plot_means(self, parameters, thin_start=0, thin_end=None):
+        """
+        Makes a plot of the movement of the ensemble mean.
+        """
+        if thin_end is None:
+            thin_end = self.niterations
+        if isinstance(parameters, str):
+            parameters = [parameters]
+        elif parameters is None:
+            parameters = self.variable_params
+        fig, axs = plt.subplots(len(parameters), sharex=True, 
+                                figsize=(5, len(parameters)*2.5+1))
+        fig2, axs2=plt.subplots(len(parameters), sharex=True,
+                                figsize=(5, len(parameters)*2.5+1))
+        fig3, axs3=plt.subplots(len(parameters), sharex=True,
+                                figsize=(5, len(parameters)*2.5+1))
+        for i,param in enumerate(parameters):
+            samples = self.read_raw_samples(
+                param, thin_start=thin_start, thin_interval=1, 
+                thin_end=thin_end, flatten=False)[param]
+            samples = self.average_walkers(samples)
+            std_dev = self.std_dev_walkers(samples)
+            axs[i].plot(samples) 
+            axs[i].set_title("Ensemble average of " + str(param))
+            fdata = TimeSeries(samples).to_frequencyseries()
+            axs2[i].plot(fdata)
+            axs2[i].set_title("Fourier transformed ensemble average of " + str(param))
+            axs[3].plot(std_dev)
+            axs3[i].set_title("Standard deviations of " + str(param)) 
+        fig.savefig("ensemblve_averages")
+        fig2.savefig("fourier_transforms") 
+        fig3.savefig("variances")

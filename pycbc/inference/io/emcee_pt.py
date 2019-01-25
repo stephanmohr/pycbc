@@ -123,3 +123,9 @@ class EmceePTFile(MultiTemperedMCMCIO, MultiTemperedMetadataIO,
         Overwrite the abstract method of BaseInferenceFile
         """
         return samples[0].mean(axis=0)
+    
+    def std_dev_walkers(self, samples):
+        """
+        Overwrite the abstract method of BaseInferenceFile 
+        """
+        return ((samples[0] - samples[0].mean(axis=0))**2).mean(axis=0)

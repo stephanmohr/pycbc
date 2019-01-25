@@ -100,3 +100,9 @@ class EmceeFile(SingleTempMCMCIO, MCMCMetadataIO, BaseInferenceFile):
         Overwrite the abstract method of base_hdf. 
         """
         return samples.mean(axis=0) 
+    
+    def std_dev_walkers(self, samples):
+        """
+        Overwrite the abstract method of base_hdf.
+        """
+        return ((samples - samples.mean(axis=0))**2).mean(axis=0)
