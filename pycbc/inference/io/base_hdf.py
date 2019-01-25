@@ -805,7 +805,7 @@ class BaseInferenceFile(h5py.File):
             samples = self.read_raw_samples(
                 param, thin_start=thin_start, thin_interval=thin_end, 
                 thin_end=thin_end, flatten=False)[param] 
-            samples = samples.mean(axis=0)
+            samples = average_walkers(samples)
             acf = autocorrelation.calculate_acf(samples)
         except KeyError as e:
             raise e
@@ -834,9 +834,9 @@ class BaseInferenceFile(h5py.File):
                 thin_end = self['samples'][param].shape[-1]
                 print("Using thin_end = ", thin_end)
             samples = self.read_raw_samples(
-                param, thin_start=0, thin_interval=1, thin_end=T, 
+                param, thin_start=0, thin_interval=1, thin_end=thin_end, 
                 flatten=False)[param]
-            samples = samples.mean(axis=0)
+            samples = average_walkers(samples)
             if mode == 'natural':
                 acl = autocorrelation.calculate_acl(samples)
             elif mode == 'covariance':
@@ -861,6 +861,8 @@ class BaseInferenceFile(h5py.File):
         """
         if isinstance(parameters, str):
             parameters = [parameters]
+        elif parameters is None:
+            parameters = self.vairable_params 
         for param in parameters: 
             n = self['samples'][param].shape[-1]
             fig, axs = plt.subplots(nsets, sharex=True, sharey=True)
