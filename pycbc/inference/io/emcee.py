@@ -94,3 +94,9 @@ class EmceeFile(SingleTempMCMCIO, MCMCMetadataIO, BaseInferenceFile):
             fvalue = self[self.samples_group][field_name][:]
             thin = fvalue[:,self.thin_start:self.thin_end:self.thin_interval]
             s[field_name] = thin.flatten()
+    
+    def average_walkers(self, samples):
+        """
+        Overwrite the abstract method of base_hdf. 
+        """
+        return samples.mean(axis=0) 

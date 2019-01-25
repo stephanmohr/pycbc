@@ -171,3 +171,11 @@ def calculate_acl(data, m=5, dtype=int):
     else:
         acl = numpy.inf
     return acl
+
+def calculate_convex_acl(samples):
+    """ 
+    For the given 1D array of samples calculates the estimate for the variance 
+    from the mean under the assumption of being a stationary markov chain by using
+    the initial convex sequence method.
+    """ 
+    return 0 

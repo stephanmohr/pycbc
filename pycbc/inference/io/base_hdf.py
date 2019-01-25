@@ -34,8 +34,11 @@ import numpy
 
 import h5py
 
+import matplotlib.pyplot as plt 
+
 from pycbc.io import FieldArray
 from pycbc.inject import InjectionSet
+from pycbc.filter import autocorrelation
 
 class BaseInferenceFile(h5py.File):
     """Base class for all inference hdf files.
@@ -772,3 +775,102 @@ class BaseInferenceFile(h5py.File):
                 cls.write_kwargs_to_attrs(attrs, **val)
             else:
                 attrs[arg] = val
+    
+    @abstractmethod
+    def average_walkers(self, samples):
+        """Returns the samples averaged over the walkers
+        """
+        pass 
+
+    def get_acf_for_time(self, param, thin_start=0, thin_end=None):
+        """Returns the acf for the selected parameter, where only the first T samples 
+        are used.
+
+        Parameters 
+        ----------
+        T : int 
+            Will use samples in the iterations [0:T]
+        param : string
+            Valid key for a group of samples 
+        
+        Returns
+        -------
+        acf : numpy.array
+            The natural estimator of the autocorrelation function.
+        """
+        try: 
+            if thin_end is None:
+                thin_end = self['samples'][param].shape[-1]
+                print("Using thin_end = ", thin_end)
+            samples = self.read_raw_samples(
+                param, thin_start=thin_start, thin_interval=thin_end, 
+                thin_end=thin_end, flatten=False)[param] 
+            samples = samples.mean(axis=0)
+            acf = autocorrelation.calculate_acf(samples)
+        except KeyError as e:
+            raise e
+        return acf 
+    
+    def get_natural_acl_for_time(self, param, thin_start=0, thin_end=None, 
+                                 mode='natural'):
+        """Returns the acl for the selected parameter, calculated as the sum over 
+        the natural estimators for the acf and the variance. 
+        Only the first T samples are used.
+
+        Parameters
+        ----------
+        T : int 
+            Will use samples in the iterations [0:T]
+        param : string 
+            Valid key for a group of samples 
+
+        Returns
+        -------
+        acl : float 
+            The sum acl as sum of the natural estimators for acf.
+        """
+        try: 
+            if thin_end is None:
+                thin_end = self['samples'][param].shape[-1]
+                print("Using thin_end = ", thin_end)
+            samples = self.read_raw_samples(
+                param, thin_start=0, thin_interval=1, thin_end=T, 
+                flatten=False)[param]
+            samples = samples.mean(axis=0)
+            if mode == 'natural':
+                acl = autocorrelation.calculate_acl(samples)
+            elif mode == 'covariance':
+                acl = autocorrelation.calculate_convex_acl(samples)
+        except KeyError as e:
+            print("Possible parameters are: ", self.variable_params) 
+        return acl 
+    
+    def plot_acfs(self, parameters, nsets=5):
+        """ Plot the acfs for all parameters for several different numbers of 
+        intervals. Will make nsets plots for each parameter, where plot number i
+        calculates the acf using samples from 0 to n / nsets * i with n being the 
+        total number of iterations. 
+
+        Parameters
+        ----------
+        parameters : list of string or string
+            The list of parameters for which to create the plots 
+        
+        nsets : int 
+            The number of divisions used for separate calculation of the acl. 
+        """
+        if isinstance(parameters, str):
+            parameters = [parameters]
+        for param in parameters: 
+            n = self['samples'][param].shape[-1]
+            fig, axs = plt.subplots(nsets, sharex=True, sharey=True)
+            fig.suptitle("Autocorrelation function for " + str(param))
+            for i in range(nsets):
+                thin_end = (n // nsets) * (i+1) 
+                acf = self.get_acf_for_time(param, thin_end=thin_end) 
+                acl = self.get_natural_acl_for_time(param, thin_end=thin_end) 
+                axs[i].plot(acf, label='auto correlation function') 
+                axs[i].axvline(acl, label='summed natural estimators')
+                axs[i].set_title("Number of samples: " + str(thin_end)) 
+                axs[i].legend()
+            fig.savefig('autocorrelation of ' + str(param)) 
