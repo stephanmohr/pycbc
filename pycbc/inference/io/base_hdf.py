@@ -867,7 +867,7 @@ class BaseInferenceFile(h5py.File):
             parameters = self.vairable_params 
         for param in parameters: 
             n = self['samples'][param].shape[-1]
-            fig, axs = plt.subplots(nsets, sharex=True, sharey=True)
+            fig, axs = plt.subplots(nsets, sharex=True, sharey=True, figsize=(5,5))
             fig.suptitle("Autocorrelation function for " + str(param))
             for i in range(nsets):
                 thin_end = (n // nsets) * (i+1) 
