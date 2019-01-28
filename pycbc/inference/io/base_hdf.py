@@ -886,6 +886,7 @@ class BaseInferenceFile(h5py.File):
                 axs[i].axvline(acl, label='summed natural estimators')
                 axs[i].set_title("Number of samples: " + str(thin_end)) 
                 axs[i].legend()
+                axs[i].axhline(color='black', linewidth=1.0)
             fig.savefig('autocorrelation_of_' + str(param)) 
     
     def plot_means(self, parameters=None, thin_start=0, thin_end=None):
@@ -921,6 +922,6 @@ class BaseInferenceFile(h5py.File):
             axs2[i].set_ylim((-10,20))
             axs3[i].plot(std_dev)
             axs3[i].set_title("Standard deviations of " + str(param)) 
-        fig.savefig("ensemblve_averages")
+        fig.savefig("ensemble_averages")
         fig2.savefig("fourier_transforms") 
         fig3.savefig("variances")
