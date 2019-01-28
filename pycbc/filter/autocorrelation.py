@@ -66,7 +66,7 @@ def calculate_autocov_function(data, delta_t=1.0, unbiased=False):
     acf = acf[:ny_orig]
 
     if unbiased:
-        acf /= np.arange(len(acf), 0, -1) 
+        acf /= numpy.arange(len(acf), 0, -1) 
     else:
         acf /= len(acf) 
 

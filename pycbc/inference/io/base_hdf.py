@@ -979,8 +979,8 @@ class BaseInferenceFile(h5py.File):
                     thin_end   = (n//nsets) * (i+1)
                 autocov = self.get_autocov_for_time(param, thin_start=thin_start,
                                                     thin_end=thin_end) 
-                axs[i].plot(autocov, label='autocorrelation function')
+                axs[i].plot(autocov, label='autocovariance function')
                 axs[i].set_title('samples in ['+str(thin_start)+","+str(thin_end)+"]")
                 axs[i].legend()
                 axs[i].axhline(color='black', linewidth=0.7)
-            fig.savefig('autocovariance_of_' + str(param)) 
+            fig.savefig('autocovariance_of_' + str(param) + '_' + mode)  
