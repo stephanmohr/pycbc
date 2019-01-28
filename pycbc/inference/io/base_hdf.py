@@ -951,7 +951,7 @@ class BaseInferenceFile(h5py.File):
             fig.savefig('autocorrelation_of_' + str(param)) 
 
 
-    def plot_auto_correlation(self, parameters=None, nsets=5, mode='sequential')
+    def plot_auto_correlation(self, parameters=None, nsets=5, mode='sequential'):
         """
         Parameters
         ----------
@@ -983,4 +983,4 @@ class BaseInferenceFile(h5py.File):
                 axs[i].set_title('samples in ['+str(thin_start)+","+str(thin_end)+"]")
                 axs[i].legend()
                 axs[i].axhline(color='black', linewidth=0.7)
-            fig.savefig('autocovariance_of_' = str(param)) 
+            fig.savefig('autocovariance_of_' + str(param)) 
