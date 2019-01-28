@@ -64,7 +64,12 @@ def calculate_autocov_function(data, delta_t=1.0, unbiased=False):
     # IFFT correlated data to get unnormalized autocovariance time series
     acf = cdata.to_timeseries()
     acf = acf[:ny_orig]
-    
+
+    if unbiased:
+        acf /= np.arange(len(acf), 0, -1) 
+    else:
+        acf /= len(acf) 
+
     if isinstance(data, TimeSeries):
         return TimeSeries(acf, delta_t=delta_t)
     else:

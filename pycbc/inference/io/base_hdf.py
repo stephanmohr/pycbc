@@ -951,7 +951,7 @@ class BaseInferenceFile(h5py.File):
             fig.savefig('autocorrelation_of_' + str(param)) 
 
 
-    def plot_auto_correlation(self, parameters=None, nsets=5, mode='sequential'):
+    def plot_autocov(self, parameters=None, nsets=5, mode='sequential'):
         """
         Parameters
         ----------
