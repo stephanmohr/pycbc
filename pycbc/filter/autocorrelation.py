@@ -31,6 +31,45 @@ from math import isnan
 from pycbc.filter.matchedfilter import correlate
 from pycbc.types import FrequencySeries, TimeSeries, zeros
 
+def calculate_autocov_function(data, delta_t=1.0, unbiased=False):
+    """
+    Same as calculate_acf but without the normalization
+    """
+    # if given a TimeSeries instance then get numpy.array
+    if isinstance(data, TimeSeries):
+        y = data.numpy()
+        delta_t = data.delta_t
+    else:
+        y = data
+
+    # Zero mean
+    y = y - y.mean()
+    ny_orig = len(y)
+
+    npad = 1
+    while npad < 2*ny_orig:
+        npad = npad << 1
+    ypad = numpy.zeros(npad)
+    ypad[:ny_orig] = y
+
+    # FFT data minus the mean
+    fdata = TimeSeries(ypad, delta_t=delta_t).to_frequencyseries()
+
+    # correlate
+    # do not need to give the congjugate since correlate function does it
+    cdata = FrequencySeries(zeros(len(fdata), dtype=fdata.dtype),
+                            delta_f=fdata.delta_f, copy=False)
+    correlate(fdata, fdata, cdata)
+
+    # IFFT correlated data to get unnormalized autocovariance time series
+    acf = cdata.to_timeseries()
+    acf = acf[:ny_orig]
+    
+    if isinstance(data, TimeSeries):
+        return TimeSeries(acf, delta_t=delta_t)
+    else:
+        return acf
+
 def calculate_acf(data, delta_t=1.0, unbiased=False):
     r"""Calculates the one-sided autocorrelation function.
 

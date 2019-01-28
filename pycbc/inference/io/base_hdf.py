@@ -816,11 +816,35 @@ class BaseInferenceFile(h5py.File):
                 param, thin_start=thin_start, thin_interval=1, 
                 thin_end=thin_end, flatten=False)[param] 
             samples = self.average_walkers(samples)
-            acf = autocorrelation.calculate_acf(samples)
+            acf = autocorrelation.calculate_autocov_function(samples)
         except KeyError as e:
             raise e
         return acf 
     
+    def get_autocov_for_time(self, param, thin_start=0, thin_end=None):
+        """Returns the auto-covariance function for the selected parameter,
+        i.e. the non-normalized auto-correlation, where samples from 
+        thin_start to thin_end are used.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        """
+        try:
+            if thin_end is None:
+                thin_end = self['samples'][param].shape[-1]
+                print("Using thin_end = ", thin_end)
+            samples = self.read_raw_samples(
+                param, thin_start=thin_start, thin_interval=1,
+                thin_end=thin_end, flatten=False)[param]
+            samples = self.average_walkers(samples) 
+            autocov_function = 
+        except KeyError as e:
+            raise e 
+        return autocov_function 
+
     def get_natural_acl_for_time(self, param, thin_start=0, thin_end=None, 
                                  mode='natural'):
         """Returns the acl for the selected parameter, calculated as the sum over 
@@ -855,40 +879,7 @@ class BaseInferenceFile(h5py.File):
             print("Possible parameters are: ", self.variable_params) 
             raise e 
         return acl 
-    
-    def plot_acfs(self, parameters, nsets=5):
-        """ Plot the acfs for all parameters for several different numbers of 
-        intervals. Will make nsets plots for each parameter, where plot number i
-        calculates the acf using samples from 0 to n / nsets * i with n being the 
-        total number of iterations. 
 
-        Parameters
-        ----------
-        parameters : list of string or string
-            The list of parameters for which to create the plots 
-        
-        nsets : int 
-            The number of divisions used for separate calculation of the acl. 
-        """
-        if isinstance(parameters, str):
-            parameters = [parameters]
-        elif parameters is None:
-            parameters = self.variable_params 
-        for param in parameters: 
-            n = self['samples'][param].shape[-1]
-            fig, axs = plt.subplots(nsets, sharex=True, sharey=True, figsize=(8,8))
-            fig.suptitle("Autocorrelation function for " + str(param))
-            for i in range(nsets):
-                thin_end = (n // nsets) * (i+1) 
-                acf = self.get_acf_for_time(param, thin_end=thin_end) 
-                acl = self.get_natural_acl_for_time(param, thin_end=thin_end) 
-                axs[i].plot(acf, label='auto correlation function') 
-                axs[i].axvline(acl, label='summed natural estimators')
-                axs[i].set_title("Number of samples: " + str(thin_end)) 
-                axs[i].legend()
-                axs[i].axhline(color='black', linewidth=1.0)
-            fig.savefig('autocorrelation_of_' + str(param)) 
-    
     def plot_means(self, parameters=None, thin_start=0, thin_end=None):
         """
         Makes a plot of the movement of the ensemble mean.
@@ -925,3 +916,71 @@ class BaseInferenceFile(h5py.File):
         fig.savefig("ensemble_averages")
         fig2.savefig("fourier_transforms") 
         fig3.savefig("variances")
+
+    def plot_acfs(self, parameters, nsets=5):
+        """ Plot the acfs for all parameters for several different numbers of 
+        intervals. Will make nsets plots for each parameter, where plot number i
+        calculates the acf using samples from 0 to n / nsets * i with n being the 
+        total number of iterations. 
+
+        Parameters
+        ----------
+        parameters : list of string or string
+            The list of parameters for which to create the plots 
+        
+        nsets : int 
+            The number of divisions used for separate calculation of the acl. 
+        """
+        if isinstance(parameters, str):
+            parameters = [parameters]
+        elif parameters is None:
+            parameters = self.variable_params 
+        for param in parameters: 
+            n = self['samples'][param].shape[-1]
+            fig, axs = plt.subplots(nsets, sharex=True, sharey=True, figsize=(8,8))
+            fig.suptitle("Autocorrelation function for " + str(param))
+            for i in range(nsets):
+                thin_end = (n // nsets) * (i+1) 
+                acf = self.get_acf_for_time(param, thin_end=thin_end) 
+                acl = self.get_natural_acl_for_time(param, thin_end=thin_end) 
+                axs[i].plot(acf, label='auto correlation function') 
+                axs[i].axvline(acl, label='summed natural estimators')
+                axs[i].set_title("Number of samples: " + str(thin_end)) 
+                axs[i].legend()
+                axs[i].axhline(color='black', linewidth=0.7)
+            fig.savefig('autocorrelation_of_' + str(param)) 
+
+
+    def plot_auto_correlation(self, parameters=None, nsets=5, mode='sequential')
+        """
+        Parameters
+        ----------
+        mode : 'sequential' or 'cumulative'
+            If sequential uses indices [0,n/nsets], [n/nsets, 2*n/nsets], ... , [(nsets-1)*n/nsets, n]
+            as batches. 
+            If cumulative uses indices [0,n/nsets], [0,2*n/nsets], ... , [0,n] 
+            as batches.
+        """
+        if isinstance(parameters, str):
+            parameters = [parameters] 
+        elif parameters is None:
+            parameters = self.variable_params 
+        for param in parameters:
+            n = self['samples'][param].shape[-1] 
+            fig, axs = plt.subplots(nsets, sharex=True, 
+                                figsize=(5, nsets*2.5+1))
+            fig.suptitle("Autocovariance function for " + str(param))
+            for i in range(nsets):
+                if mode=='sequential':
+                    thin_start = (n//nsets) * i 
+                    thin_end   = (n//nsets) * (i+1) 
+                if mode=='cumulative':
+                    thin_start = 0
+                    thin_end   = (n//nsets) * (i+1)
+                autocov = self.get_autocov_for_time(param, thin_start=thin_start,
+                                                    thin_end=thin_end) 
+                axs[i].plot(autocov, label='autocorrelation function')
+                axs[i].set_title('samples in ['+str(thin_start)+","+str(thin_end)+"]")
+                axs[i].legend()
+                axs[i].axhline(color='black', linewidth=0.7)
+            fig.savefig('autocovariance_of_' = str(param)) 
