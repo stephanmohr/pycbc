@@ -816,7 +816,7 @@ class BaseInferenceFile(h5py.File):
                 param, thin_start=thin_start, thin_interval=1, 
                 thin_end=thin_end, flatten=False)[param] 
             samples = self.average_walkers(samples)
-            acf = autocorrelation.calculate_autocov_function(samples)
+            acf = autocorrelation.calculate_acf(samples)
         except KeyError as e:
             raise e
         return acf 
@@ -840,7 +840,7 @@ class BaseInferenceFile(h5py.File):
                 param, thin_start=thin_start, thin_interval=1,
                 thin_end=thin_end, flatten=False)[param]
             samples = self.average_walkers(samples) 
-            autocov_function = 
+            autocov_function = autocorrelation.calculate_autocov_function(samples)
         except KeyError as e:
             raise e 
         return autocov_function 
