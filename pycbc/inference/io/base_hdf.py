@@ -821,7 +821,7 @@ class BaseInferenceFile(h5py.File):
             raise e
         return acf 
     
-    def get_autocov_for_time(self, param, thin_start=0, thin_end=None):
+    def get_autocov_for_time(self, param, thin_start=0, thin_end=None, func='standard'):
         """Returns the auto-covariance function for the selected parameter,
         i.e. the non-normalized auto-correlation, where samples from 
         thin_start to thin_end are used.
@@ -839,8 +839,11 @@ class BaseInferenceFile(h5py.File):
             samples = self.read_raw_samples(
                 param, thin_start=thin_start, thin_interval=1,
                 thin_end=thin_end, flatten=False)[param]
-            samples = self.average_walkers(samples) 
-            autocov_function = autocorrelation.calculate_autocov_function(samples)
+            samples = self.average_walkers(samples)
+            if mode == 'standard':
+                autocov = autocorrelation.calculate_autocov_function(samples)
+            elif mode == 'own':
+                autocov = autocorrelation.calculate_autocov_2(samples)
         except KeyError as e:
             raise e 
         return autocov_function 
@@ -951,7 +954,8 @@ class BaseInferenceFile(h5py.File):
             fig.savefig('autocorrelation_of_' + str(param)) 
 
 
-    def plot_autocov(self, parameters=None, nsets=5, mode='sequential'):
+    def plot_autocov(self, parameters=None, nsets=5, mode='sequential',
+                     func='standard'):
         """
         Parameters
         ----------
@@ -971,14 +975,14 @@ class BaseInferenceFile(h5py.File):
                                 figsize=(5, nsets*2.5+1))
             fig.suptitle("Autocovariance function for " + str(param))
             for i in range(nsets):
-                if mode=='sequential':
+                if mode == 'sequential':
                     thin_start = (n//nsets) * i 
                     thin_end   = (n//nsets) * (i+1) 
-                if mode=='cumulative':
+                if mode == 'cumulative':
                     thin_start = 0
                     thin_end   = (n//nsets) * (i+1)
                 autocov = self.get_autocov_for_time(param, thin_start=thin_start,
-                                                    thin_end=thin_end) 
+                                                    thin_end=thin_end, func=func)
                 axs[i].plot(autocov, label='autocovariance function')
                 axs[i].set_title('samples in ['+str(thin_start)+","+str(thin_end)+"]")
                 axs[i].legend()
