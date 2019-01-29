@@ -93,7 +93,7 @@ def calculate_autocov_2(data, delta_t=1.0, unbiased=False):
 
     acov = numpy.zeros(n) 
     for k in range(n):
-        acov[k] = numpy.sum(y * numpy.roll(ypad, -1)) 
+        acov[k] = numpy.sum(y * numpy.roll(ypad, -1)[0:n] ) 
     
     return acov 
 
