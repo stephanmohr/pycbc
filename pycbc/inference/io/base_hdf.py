@@ -840,13 +840,13 @@ class BaseInferenceFile(h5py.File):
                 param, thin_start=thin_start, thin_interval=1,
                 thin_end=thin_end, flatten=False)[param]
             samples = self.average_walkers(samples)
-            if mode == 'standard':
+            if func == 'standard':
                 autocov = autocorrelation.calculate_autocov_function(samples)
-            elif mode == 'own':
+            elif func == 'own':
                 autocov = autocorrelation.calculate_autocov_2(samples)
         except KeyError as e:
             raise e 
-        return autocov_function 
+        return autocov 
 
     def get_natural_acl_for_time(self, param, thin_start=0, thin_end=None, 
                                  mode='natural'):
