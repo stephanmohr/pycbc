@@ -848,10 +848,9 @@ class BaseInferenceFile(h5py.File):
             raise e 
         return autocov 
 
-    def get_natural_acl_for_time(self, param, thin_start=0, thin_end=None, 
+    def get_acl_for_time(self, param, thin_start=0, thin_end=None, 
                                  mode='natural'):
-        """Returns the acl for the selected parameter, calculated as the sum over 
-        the natural estimators for the acf and the variance. 
+        """
         Only the first T samples are used.
 
         Parameters
@@ -878,10 +877,28 @@ class BaseInferenceFile(h5py.File):
                 acl = autocorrelation.calculate_acl(samples)
             elif mode == 'convex':
                 acl = autocorrelation.calculate_convex_acl(samples)
+            elif mode == 'batches':
+                acl = autocorrelation.batch_acl(samples) 
         except KeyError as e:
             print("Possible parameters are: ", self.variable_params) 
             raise e 
         return acl 
+    
+    def plot_acls(self, param, mode='natural'):
+        """
+        Plots acls
+        """
+        if mode == 'all':
+            modes = ['natural', 'batches']
+        else:
+            modes = [mode]
+        for mode in modes:
+            x = list(range(1000, self., 1000))
+            y = [get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
+            ax.plot(x,y, label=mode)
+        ax.legend()
+        fig.savefig("ACLs_"+str(param), dpi=400)
+
 
     def plot_means(self, parameters=None, thin_start=0, thin_end=None):
         """
