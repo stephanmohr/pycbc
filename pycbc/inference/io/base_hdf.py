@@ -878,7 +878,7 @@ class BaseInferenceFile(h5py.File):
             elif mode == 'convex':
                 acl = autocorrelation.calculate_convex_acl(samples)
             elif mode == 'batches':
-                acl = autocorrelation.batch_acl(samples) 
+                acl = autocorrelation.batch_acl(samples, 15) 
         except KeyError as e:
             print("Possible parameters are: ", self.variable_params) 
             raise e 
@@ -893,7 +893,7 @@ class BaseInferenceFile(h5py.File):
         else:
             modes = [mode]
         for mode in modes:
-            x = list(range(1000, self., 1000))
+            x = list(range(2000, self.niterations, 2000))
             y = [get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
             ax.plot(x,y, label=mode)
         ax.legend()
