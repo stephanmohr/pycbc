@@ -28,6 +28,7 @@ and length of a data series.
 
 import numpy
 from math import isnan
+
 from pycbc.filter.matchedfilter import correlate
 from pycbc.types import FrequencySeries, TimeSeries, zeros
 
@@ -96,6 +97,22 @@ def calculate_autocov_2(data, delta_t=1.0, unbiased=False):
         acov[k] = 1/float(n) * numpy.sum(y * numpy.roll(ypad, -k)[0:n] ) 
     
     return acov 
+
+def plot_acov(data, name, normalize=False):
+    """ Plots the autocovariance function for data.
+    """
+    plt.figure()
+    if isinstance(data, numpy.ndarray):
+        data = [data] 
+    for i, d in enumerate(data):
+        acov = calculate_autocov_2(d) 
+        if normalize:
+            acov /= acov[0]
+        plt.plot(acov, label = i)
+    plt.axhline(color='black', linewidth=0.7)
+    plt.legend()
+    plt.savefig(name)
+    plt.show()
 
 def calculate_acf(data, delta_t=1.0, unbiased=False):
     r"""Calculates the one-sided autocorrelation function.
@@ -237,6 +254,29 @@ def calculate_acl(data, m=5, dtype=int):
     else:
         acl = numpy.inf
     return acl
+
+def batch_acl(samples, nbatches): 
+    """
+    Performs the batch-mean algorithm to calculate the acl of samples.
+
+    Samples are split up evenly into nbatches batches. For each of those the 
+    variance from the mean over all the samples is calculated. Under the 
+    assumptions for the Markov chain CLT, the variance of the batch-means from 
+    the true mean will be 1/(batch-length)*Var(single sample). 
+    Hence the variance of the whole chain is (batch-length)/(nsamples)*s_batches
+    """
+    mean = samples.mean()
+    # Take the highest integer below the fraction
+    # This way, will loose at maximum nbatches samples
+    batch_length = int(len(samples) // nbatches) 
+    batches = [samples[k*batch_length:(k+1)*batch_length] for k in range(nbatches)] 
+    batch_means = [] 
+    for batch in batches:
+        batch_means.append(batch.mean())
+    batch_means = numpy.array(batch_means) 
+    batch_variance = batch_length / nbatches * numpy.sum((batch_means - mean)**2 )
+    return batch_variance 
+
 
 def calculate_convex_acl(samples):
     """ 
