@@ -931,7 +931,7 @@ class BaseInferenceFile(h5py.File):
             axs2[i].plot(fdata.real())
             axs2[i].plot(fdata.imag())
             axs2[i].set_title("Fourier transformed ensemble average of " + str(param))
-            axs2[i].set_ylim((-10,20))
+            # axs2[i].set_ylim((-10,20))
             axs3[i].plot(std_dev)
             axs3[i].set_title("Standard deviations of " + str(param)) 
         fig.savefig("ensemble_averages")
