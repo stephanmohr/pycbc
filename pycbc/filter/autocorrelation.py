@@ -277,6 +277,25 @@ def batch_acl(samples, nbatches):
     batch_variance = batch_length / nbatches * numpy.sum((batch_means - mean)**2 )
     return batch_variance 
 
+def initial_monotone_sequence(samples): 
+    """
+    Calculates the initial monotone sequence for the autocovariance function of the samples. 
+
+    The initial monotone sequence is defined as the largest monotone function 
+    smaller than Gamma_k = gamma_2k + gamma_(2k+1),
+    where gamma_n is the autocovariance with lag n. 
+    """
+    
+    acov = calculate_autocov_function(samples) 
+
+    n = int(len(samples)/2)
+    Gamma = numpy.zeros(n)
+    Gamma[:] = acov[:2*n:2] + acov[1:2*n+1:2]
+    Gamma_m = numpy.zeros(n)
+    Gamma_m[0] = Gamma[0] 
+    for i in range(1,n):
+        Gamma_m[i] = min(Gamma_m[i-1], Gamma[i])
+    return Gamma_m 
 
 def calculate_convex_acl(samples):
     """ 
@@ -284,4 +303,4 @@ def calculate_convex_acl(samples):
     from the mean under the assumption of being a stationary markov chain by using
     the initial convex sequence method.
     """ 
-    return 0 
+    pass 

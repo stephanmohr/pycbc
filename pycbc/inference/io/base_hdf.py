@@ -939,7 +939,7 @@ class BaseInferenceFile(h5py.File):
         fig3.savefig("variances")
 
     def plot_acfs(self, parameters, nsets=5):
-        """ Plot the acfs for all parameters for several different numbers of 
+        """ Plot the acfs for given parameters for several different numbers of 
         intervals. Will make nsets plots for each parameter, where plot number i
         calculates the acf using samples from 0 to n / nsets * i with n being the 
         total number of iterations. 
