@@ -894,7 +894,7 @@ class BaseInferenceFile(h5py.File):
             modes = [mode]
         fig, ax = plt.subplots(1)
         for mode in modes:
-            x = list(range(2000, self.niterations, 2000))
+            x = list(range(1000, self.niterations, 1000))
             y = [self.get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
             ax.plot(x,y, label=mode)
         ax.legend()
