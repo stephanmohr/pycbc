@@ -279,7 +279,8 @@ def batch_acl(samples, nbatches):
 
 def initial_monotone_sequence(samples): 
     """
-    Calculates the initial monotone sequence for the autocovariance function of the samples. 
+    Calculates the normalized initial monotone sequence for the 
+    autocovariance function of the samples. 
 
     The initial monotone sequence is defined as the largest monotone function 
     smaller than Gamma_k = gamma_2k + gamma_(2k+1),
@@ -295,12 +296,17 @@ def initial_monotone_sequence(samples):
     Gamma_m[0] = Gamma[0] 
     for i in range(1,n):
         Gamma_m[i] = min(Gamma_m[i-1], Gamma[i])
-    return Gamma_m 
+    assert numpy.all(numpy.diff(Gamma_m)<=0) 
+    return Gamma_m / acov[0] 
 
-def calculate_convex_acl(samples):
+def calculate_monotone_acl(samples):
     """ 
     For the given 1D array of samples calculates the estimate for the variance 
     from the mean under the assumption of being a stationary markov chain by using
     the initial convex sequence method.
     """ 
-    pass 
+    ims = initial_monotone_sequence(samples) 
+    maxind = numpy.argmax(ims <= 0) 
+    acl = numpy.sum(ims[0:maxind])*2 - 1
+    return acl
+    
