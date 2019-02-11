@@ -280,7 +280,7 @@ def batch_acl(samples, nbatches):
     print("batch_means are " , batch_means) 
     print("mean is " , mean) 
     print(batch_variance) 
-    gamma0 = 1/len(samples) * numpy.sum((samples - samples.mean())**2)
+    gamma0 = 1/float(len(samples)) * numpy.sum((samples - samples.mean())**2)
     print("gamma0 is ", gamma0)
     return batch_variance /gamma0
 
