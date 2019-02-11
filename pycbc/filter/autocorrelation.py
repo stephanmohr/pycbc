@@ -280,7 +280,9 @@ def batch_acl(samples, nbatches):
     print("batch_means are " , batch_means) 
     print("mean is " , mean) 
     print(batch_variance) 
-    return batch_variance 
+    gamma0 = 1/len(samples) * numpy.sum((samples - samples.mean())**2)
+    print("gamma0 is ", gamma0)
+    return batch_variance /gamma0
 
 def initial_monotone_sequence(samples): 
     """
@@ -292,7 +294,7 @@ def initial_monotone_sequence(samples):
     where gamma_n is the autocovariance with lag n. 
     """
     
-    acov = calculate_autocov_function(samples) 
+    acov = numpy.array(calculate_autocov_function(samples)) 
 
     n = int(len(samples)/2)
     Gamma = numpy.zeros(n)
