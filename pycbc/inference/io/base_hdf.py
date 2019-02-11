@@ -875,8 +875,8 @@ class BaseInferenceFile(h5py.File):
             samples = self.average_walkers(samples)
             if mode == 'natural':
                 acl = autocorrelation.calculate_acl(samples)
-            elif mode == 'convex':
-                acl = autocorrelation.calculate_convex_acl(samples)
+            elif mode == 'monotone':
+                acl = autocorrelation.calculate_monotone_acl(samples)
             elif mode == 'batches':
                 acl = autocorrelation.batch_acl(samples, 15) 
         except KeyError as e:
@@ -889,7 +889,7 @@ class BaseInferenceFile(h5py.File):
         Plots acls
         """
         if mode == 'all':
-            modes = ['natural', 'batches']
+            modes = ['natural', 'batches','monotone']
         else:
             modes = [mode]
         fig, ax = plt.subplots(1)

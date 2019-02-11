@@ -274,7 +274,12 @@ def batch_acl(samples, nbatches):
     for batch in batches:
         batch_means.append(batch.mean())
     batch_means = numpy.array(batch_means) 
-    batch_variance = batch_length / nbatches * numpy.sum((batch_means - mean)**2 )
+    batch_variance = float(batch_length) / nbatches * numpy.sum((batch_means - mean)**2 )
+    print("batch_length is " , batch_length) 
+    print("nbatches is " , nbatches)
+    print("batch_means are " , batch_means) 
+    print("mean is " , mean) 
+    print(batch_variance) 
     return batch_variance 
 
 def initial_monotone_sequence(samples): 
