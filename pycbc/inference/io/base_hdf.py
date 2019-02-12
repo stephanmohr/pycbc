@@ -275,7 +275,10 @@ class BaseInferenceFile(h5py.File):
         """
         arg = self.cmd.split()[1:]
         m = modelsetup.setup_model_from_arg(arg)
-        m.update(**self['injections'].attrs) 
+        pars = self['injections'].attrs 
+        if not 'coa_phase' in pars:
+            pars['coa_phase'] = 0
+        m.update(**pars) 
         loglikelihood = m.loglikelihood
         logprior = m.logprior
         return loglikelihood, logprior 
