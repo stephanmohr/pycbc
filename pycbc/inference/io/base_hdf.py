@@ -230,6 +230,9 @@ class BaseInferenceFile(h5py.File):
         if condition is True:
             fvarnames = func.__code__.co_varnames
             samples = self.read_relevant_samples(list(fvarnames))
+            print(type(samples))
+            print(fvarnames)
+            print(type(fvarnames[0]))
             fsamples = {samples[field] for field in fvarnames}
         else:
             fvarnames = func.__code__.co_varnames
