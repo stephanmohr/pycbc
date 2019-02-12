@@ -86,9 +86,9 @@ def setup_model_from_arg(arg):
     low_frequency_cutoff_dict = option_utils.low_frequency_cutoff_from_cli(opts)
     if stilde_dict:
         model_args['data'] = stilde_dict 
-        model_args['f_lower'] = low_frequency_cutoff_dict.values()[0]
-        model_args['delta_f'] = stilde_dict.values()[0].delta_f 
-        model_args['delta_t'] = strain_dict.values()[0].delta_t 
+        # model_args['f_lower'] = low_frequency_cutoff_dict.values()[0]
+        # model_args['delta_f'] = stilde_dict.values()[0].delta_f 
+        # model_args['delta_t'] = strain_dict.values()[0].delta_t 
         model_args['psds'] = psd_dict 
     
     ctx = scheme.from_cli(opts)
