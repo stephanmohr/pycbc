@@ -294,7 +294,7 @@ class BaseInferenceFile(h5py.File):
         try:
             return self.attrs['injection_logposterior']
         except KeyError:
-            self.write_injecion_logposterior()
+            self.write_injection_logposterior()
             return self.attrs['injection_logposterior']
         
 
