@@ -278,6 +278,7 @@ class BaseInferenceFile(h5py.File):
         pars = self['injections'].attrs 
         if not 'coa_phase' in pars:
             pars['coa_phase'] = 0
+        m.sampling_transforms = None
         m.update(**pars) 
         loglikelihood = m.loglikelihood
         logprior = m.logprior
