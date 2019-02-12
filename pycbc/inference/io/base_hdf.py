@@ -34,6 +34,7 @@ import numpy
 
 import h5py
 
+from pycbc import modelsetup
 from pycbc.io import FieldArray
 from pycbc.inject import InjectionSet
 
@@ -192,6 +193,110 @@ class BaseInferenceFile(h5py.File):
         This should return a dictionary of numpy arrays.
         """
         pass
+    
+    @abstractmethod 
+    def read_relevant_samples(self, fields, **kwargs):
+        """
+        Returns only the datasets that have values that are to 
+        be used in calculations and returns them in a 1D array.
+
+        In particular, returns only the first temperature for polytempered 
+        mcmc. 
+        """
+        pass
+    
+    def integrate(self, func, condition):
+        """
+        Integrates func over the part of the parameter space where
+        condition is True.
+
+        Parameters
+        ----------
+        func : function: parameters -> vectorspace 
+            May take any number of names of samples of this file as 
+            argument and return a value which supports addition and 
+            scalar multiplication.
+        condition : function: parameters -> boolean or boolean
+            May take any number of names of samples of this file as 
+            argument and return either True or False.
+        
+        Returns
+        -------
+        Element of the value space of func. Integral of func over
+        the set of samples where condition is True.
+        """
+        if condition is False:
+            return 0
+        if condition is True:
+            fvarnames = func.__code__.co_varnames
+            fsamples = self.read_relevant_samples(list(fvarnames))
+        else:
+            fvarnames = func.__code__.co_varnames
+            cvarnames = condition.__code__.co_varnames 
+            fields = set(fvarnames).union(cvarnames) 
+            samples = self.read_relevant_samples(list(fields))
+            csamples = {samples[field] for field in cvarnames}
+            mask = condition(**csamples) 
+            fsamples = {samples[field][mask] for field in fvarnames}
+        return func(**fsamples).mean()
+
+    def calculate_D(self): 
+        """ Returns the probability mass 
+        of the smallest 'highest posterior mass' confidence interval
+        that contains the injected value.
+        """
+        injectedLogPosterior = self.get_injection_logposterior()
+        def func(loglikelihood, logprior):
+            return loglikelihood + logprior > injectedLogPosterior
+        return self.integrate(func, True)
+    
+    def write_D(self):
+        """
+        Calculates and writes D to self.attrs.
+        """
+        self.attrs['D'] = self.calculate_D() 
+    
+    def get_D(self):
+        """
+        """
+        try:
+            return self.attrs['D']
+        except KeyError:
+            self.write_D()
+            return self.attrs['D']
+
+    def calculate_injection_logprobabilities(self):
+        """Calculates the loglikelihood and the logprior of the model
+        used to generate this file at the injection values.
+        
+        Returns
+        -------
+        tuple : (loglikelihood, logprior) 
+        """
+        arg = self.cmd.split()[1:]
+        m = modelsetup.setup_model_from_arg(arg)
+        loglikelihood = m.loglikelihood
+        logprior = m.logprior
+        return loglikelihood, logprior 
+    
+    def write_injection_logposterior(self):
+        """
+        Calculates and writes the log posterior at the injection values.
+        """
+        loglikelihood, logprior = self.calculate_injection_logprobabilities()
+        self.attrs['injection_logposterior'] = loglikelihood + logprior
+    
+    def get_injection_logposterior(self):
+        """
+        Returns the logposterior value of the model used to generate this 
+        file at the injection parameters.
+        """
+        try:
+            return self.attrs['injection_logposterior']
+        except KeyError:
+            self.write_injecion_logposterior()
+            return self.attrs['injection_logposterior']
+        
 
     @abstractmethod
     def write_posterior(self, filename, **kwargs):
@@ -772,3 +877,4 @@ class BaseInferenceFile(h5py.File):
                 cls.write_kwargs_to_attrs(attrs, **val)
             else:
                 attrs[arg] = val
+    

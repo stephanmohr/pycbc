@@ -342,3 +342,14 @@ class SingleTempMCMCIO(object):
                 arr = arr.reshape((nwalkers, niterations))
             arrays[name] = arr
         return arrays
+    
+    def read_relevant_samples(self, fields,
+                              thin_start=None, thin_interval=None, thin_end=None,
+                              flatten=None):
+        """
+        Returns all samples from all walkers at the times specified by thin_start,
+        thin_interval and thin_end in a 1D array.
+        """
+        return self.read_samples(fields,
+                                thin_start=thin_start, thin_interval=thin_interval,
+                                thin_end=thin_end, flatten=True)
