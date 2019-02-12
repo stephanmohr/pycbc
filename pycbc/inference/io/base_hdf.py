@@ -233,15 +233,15 @@ class BaseInferenceFile(h5py.File):
             print(type(samples))
             print(fvarnames)
             print(type(fvarnames[0]))
-            fsamples = {samples[field] for field in fvarnames}
+            fsamples = {field:samples[field] for field in fvarnames}
         else:
             fvarnames = func.__code__.co_varnames
             cvarnames = condition.__code__.co_varnames 
             fields = set(fvarnames).union(cvarnames) 
             samples = self.read_relevant_samples(list(fields))
-            csamples = {samples[field] for field in cvarnames}
+            csamples = {field:samples[field] for field in cvarnames}
             mask = condition(**csamples) 
-            fsamples = {samples[field][mask] for field in fvarnames}
+            fsamples = {field:samples[field][mask] for field in fvarnames}
         return func(**fsamples).mean()
 
     def calculate_D(self): 
