@@ -884,21 +884,27 @@ class BaseInferenceFile(h5py.File):
             raise e 
         return acl 
     
-    def plot_acls(self, param, mode='natural', interval=1000):
+    def plot_acls(self, params, mode='natural', interval=1000, rowlength=5):
         """
         Plots acls computed over the indices at [0:i*interval] for i = 1, ..., max
         """
+        if isinstance(params, str):
+            params = [params]
         if mode == 'all':
-            modes = ['natural', 'batches','monotone']
+            modes = ['natural', 'batches', 'monotone']
         else:
             modes = [mode]
-        fig, ax = plt.subplots(1)
-        for mode in modes:
-            x = list(range(interval, self.niterations, interval))
-            y = [self.get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
-            ax.plot(x,y, label=mode)
-        ax.legend()
-        ax.set_title(param)
+        n = len(params)
+        fig, axs = plt.subplots(nrows=n//rowlength+1, ncols=min(rowlength, n),
+                               sharex=True, sharey=True)
+        axs = axs.ravel()
+        for i, param in enumerate(params):
+            for mode in modes:
+                x = list(range(interval, self.niterations, interval))
+                y = [self.get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
+                axs[i].plot(x,y, label=mode)
+                axs[i].legend()
+                axs[i].set_title(param)
         fig.savefig("ACLs_"+str(param), dpi=400)
 
 
