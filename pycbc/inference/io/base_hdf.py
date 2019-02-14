@@ -895,7 +895,7 @@ class BaseInferenceFile(h5py.File):
         else:
             modes = [mode]
         n = len(params)
-        fig, axs = plt.subplots(nrows=n//rowlength+1, ncols=min(rowlength, n),
+        fig, axs = plt.subplots(nrows=round(n//rowlength+0.5), ncols=min(rowlength, n),
                                sharex=True, sharey=True)
         axs = axs.ravel()
         for i, param in enumerate(params):
@@ -903,8 +903,8 @@ class BaseInferenceFile(h5py.File):
                 x = list(range(interval, self.niterations, interval))
                 y = [self.get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
                 axs[i].plot(x,y, label=mode)
-                axs[i].legend()
                 axs[i].set_title(param)
+        axs[-1].legend()
         fig.savefig("ACLs", dpi=400)
 
 
