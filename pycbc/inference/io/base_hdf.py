@@ -905,7 +905,7 @@ class BaseInferenceFile(h5py.File):
                 axs[i].plot(x,y, label=mode)
                 axs[i].legend()
                 axs[i].set_title(param)
-        fig.savefig("ACLs_"+str(param), dpi=400)
+        fig.savefig("ACLs", dpi=400)
 
 
     def plot_means(self, parameters=None, thin_start=0, thin_end=None):
