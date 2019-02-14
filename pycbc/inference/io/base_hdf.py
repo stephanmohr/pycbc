@@ -898,7 +898,7 @@ class BaseInferenceFile(h5py.File):
         fig, axs = plt.subplots(nrows=int(round(n//rowlength+0.5)), 
                                 ncols=min(rowlength, n),
                                 sharex=True, sharey=True, 
-                                figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5)
+                                figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
         axs = axs.ravel()
         for i, param in enumerate(params):
             for mode in modes:
