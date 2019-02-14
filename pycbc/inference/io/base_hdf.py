@@ -898,6 +898,7 @@ class BaseInferenceFile(h5py.File):
             y = [self.get_acl_for_time(param, thin_end=z, mode=mode) for z in x]
             ax.plot(x,y, label=mode)
         ax.legend()
+        ax.set_title(param)
         fig.savefig("ACLs_"+str(param), dpi=400)
 
 
