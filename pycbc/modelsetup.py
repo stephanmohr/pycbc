@@ -22,7 +22,6 @@ from pycbc import __version__
 # from pycbc.inference import (models, burn_in, option_utils)
 from pycbc.strain.calibration import Recalibrate
 
-
 def setup_model_from_arg(arg):
     from pycbc.inference import (models, burn_in, option_utils)
     parser = argparse.ArgumentParser()
@@ -104,3 +103,131 @@ def setup_model_from_arg(arg):
         model = models.read_from_config(cp, **model_args) 
     
     return model
+
+def setup_model(f_min=20,sample_rate=2048,injection_file="injection.hdf",
+                config_file="inference.ini",output_file="pseudo_out"):
+    TRIGGER_TIME_INT=1126259462
+    SEGLEN = 8
+    GPS_START_TIME = TRIGGER_TIME_INT - SEGLEN
+    GPS_END_TIME = TRIGGER_TIME_INT + SEGLEN 
+    arg = ['--seed','12','--asd-file','H1:H1asd.txt','L1:L1asd.txt',
+           '--instruments','H1','L1',
+           '--gps-start-time',str(GPS_START_TIME),
+           '--gps-end-time',str(GPS_END_TIME), 
+           '--psd-inverse-length',str(4),
+           '--fake-strain','H1:zeroNoise','L1:zeroNoise',
+           '--fake-strain-seed',str(44),
+           '--strain-high-pass',str(f_min),
+           '--sample-rate',str(sample_rate),
+           '--low-frequency-cutoff',str(f_min),
+           '--channel-name','H1:FOOBAR','L1:FOOBAR',
+           '--injection-file',str(injection_file),
+           '--config-file',str(config_file),
+           '--output-file',str(output_file),
+           '--processing-scheme','cpu',
+           '--nprocesses',str(1)]
+    return setup_model_from_arg(arg)
+
+
+class model_optimizer:
+    """Wraps model to allow optimization by scipy.optimize function.
+    """
+    def dict_from_array(self, arr):
+        """Returns a dict including all parameter values needed for the model,
+        given by an ordered input array.
+        """
+        par = dict()
+        for i in range(len(arr)):
+            par[self.parameters[i]] = arr[i] 
+        return par 
+    
+    def array_from_dict(self, par):
+        """Returns an array with all parameters such that 
+        array_from_dict(dict_from_array(arr)) == arr
+        """
+        arr = numpy.zeros(len(par))
+        for i in range(len(arr)):
+            arr[i] = par[self.parameters[i]]
+        return arr 
+    
+    def __init__(self, model, par):
+        # list of all parameters that need to be specified
+        # Must stay constant!! I.e. in the same order!! For dict_from_array!
+        self.parameters = tuple(model.variable_params)  
+        # start value:
+        self.x0 = numpy.array([par[key] for key in self.parameters]) 
+        # will be updated: 
+        self.x  = self.x0 
+        self.model = model 
+    
+    def func(self, arr):
+        """Wrapper for model loglikelihood that can be used by the optimizer
+        Since the value is minimized, return negative loglikelihood
+        """
+        par = self.dict_from_array(arr)
+        self.model.update(**par)
+        return -self.model.loglikelihood
+
+    def optimize(self):
+        """Tries to find the minimum of the loglikelihood function
+        """ 
+        optRes = scipy.optimize.minimize(self.func, self.x, method='Nelder-Mead')
+        return optRes
+
+def optimize_injection(injection_file, config_file, f_min=20, 
+                       sample_rate=2048, output_file="pseudo_out"):
+     m = setup_model(f_min=f_min, sample_rate=sample_rate, 
+                     injection_file=injection_file, 
+                     config_file=config_file, output_file=output_file)
+     f = h5py.File(injection_file)
+     par = dict(f.attrs.items())
+     mo = model_optimizer(m, par)
+     m.update(**par)
+     injection_loglikelihood = m.loglikelihood
+     optres = mo.optimize()
+     optimal_par = mo.dict_from_array(optres.x)
+     m.update(**optimal_par)
+     optimal_loglikelihood = m.loglikelihood
+     return (injection_loglikelihood, optimal_loglikelihood, 
+             par, optimal_par)
+
+def optimize_to_files(injection_files, config_file, 
+                      value_file, parameter_file):
+     """
+     For a list of injection files generates the models base on 
+     all of those files and the config file, calculates the value 
+     of the loglikelihood at the injection parameter and finds the 
+     optimum close to this value. 
+     Then outputs for all injections both the loglikelihood of the 
+     injection and the optimal loglikelihood to value_file, and 
+     outputs the loglikelihoods and the corresponding parameters 
+     to parameter_file.
+     """
+     injection_loglikelihoods = []
+     optimal_loglikelihoods = []
+     injection_parameters = []
+     optimal_parameters = []
+     for injection_file in injection_files:
+          il, ol, ip, op = optimize_injection(injection_file, config_file)
+          injection_loglikelihoods.append(il)
+          optimal_loglikelihoods.append(ol)
+          injection_parameters.append(ip)
+          optimal_parameters.append(op)
+     
+     with open(value_file, 'w') as vf:
+          for i in range(len(injection_files)):
+               vf.write(str(injection_file[i]) + "\n")
+               vf.write(str(injection_loglikelihoods[i]) + "\n")
+               vf.write(str(optimal_loglikelihoods[i]) + "\n")
+               vf.write("\n")
+     
+     with open(parameter_file, 'w') as pf:
+          for i in range(len(injection_files)):
+               pf.write(injection_files[i])
+               pf.write('loglikelihood: ' + 
+                        str(injection_loglikelihoods[i]) + ', ' +
+                        str(optimal_loglikelihoods[i]) + '\n')
+               for key in sorted(optimal_parameters[i].keys()):
+                    pf.write(key + ': ' + 
+                             str(injection_parameters[i][key]) + ', ' +
+                             str(optimal_parameters[i][key]) + '\n')
