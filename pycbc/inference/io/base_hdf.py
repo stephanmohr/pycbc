@@ -894,8 +894,8 @@ class BaseInferenceFile(h5py.File):
             modes = ['natural', 'batches', 'monotone']
         else:
             modes = [mode]
-        n = len(params)
-        fig, axs = plt.subplots(nrows=int(round(n//rowlength+0.5)), 
+        n = len(params) - 1
+        fig, axs = plt.subplots(nrows=int(n // rowlength), 
                                 ncols=min(rowlength, n),
                                 sharex=True, sharey=True, 
                                 figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
