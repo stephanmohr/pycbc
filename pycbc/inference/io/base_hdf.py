@@ -287,7 +287,7 @@ class BaseInferenceFile(h5py.File):
         # Normally, we insert the sampling parameters and need the 
         # waveform parameters. This time, it is the other way around! 
         m.sampling_transforms = None
-        m.waveform_transforms = [t.inverse for t in m.waveform_transforms]
+        m.waveform_transforms = [t.inverse() for t in m.waveform_transforms]
         m.update(**pars) 
         loglikelihood = m.loglikelihood
         logprior = m.logprior
