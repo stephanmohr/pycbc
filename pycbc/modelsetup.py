@@ -158,7 +158,8 @@ class model_optimizer:
         self.x0 = numpy.array([par[key] for key in self.parameters]) 
         # will be updated: 
         self.x  = self.x0 
-        self.model = model 
+        self.model = model
+        self.model.sampling_transforms = None
     
     def func(self, arr):
         """Wrapper for model loglikelihood that can be used by the optimizer
@@ -194,7 +195,7 @@ def optimize_injection(injection_file, config_file, f_min=20,
 def optimize_to_files(injection_files, config_file, 
                       value_file, parameter_file):
      """
-     For a list of injection files generates the models base on 
+     For a list of injection files generates the models based on 
      all of those files and the config file, calculates the value 
      of the loglikelihood at the injection parameter and finds the 
      optimum close to this value. 
