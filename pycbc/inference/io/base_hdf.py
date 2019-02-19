@@ -284,8 +284,10 @@ class BaseInferenceFile(h5py.File):
             pars['coa_phase'] = 0
         # This currently only works if the injection.ini file is given entirely
         # in parameters that the waveform generator understands.
+        # Normally, we insert the sampling parameters and need the 
+        # waveform parameters. This time, it is the other way around! 
         m.sampling_transforms = None
-        m.waveform_transforms = None
+        m.waveform_transforms = [t.inverse for t in m.waveform_transforms]
         m.update(**pars) 
         loglikelihood = m.loglikelihood
         logprior = m.logprior
