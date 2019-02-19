@@ -217,18 +217,18 @@ def optimize_to_files(injection_files, config_file,
      
      with open(value_file, 'w') as vf:
           for i in range(len(injection_files)):
-               vf.write(str(injection_file[i]) + "\n")
+               vf.write(str(injection_files[i]) + "\n")
                vf.write(str(injection_loglikelihoods[i]) + "\n")
                vf.write(str(optimal_loglikelihoods[i]) + "\n")
                vf.write("\n")
      
      with open(parameter_file, 'w') as pf:
           for i in range(len(injection_files)):
-               pf.write(injection_files[i])
-               pf.write('loglikelihood: ' + 
-                        str(injection_loglikelihoods[i]) + ', ' +
+               pf.write(injection_files[i] + '\n')
+               pf.write('loglikelihood: \t \t' + 
+                        str(injection_loglikelihoods[i]) + '\t \t' +
                         str(optimal_loglikelihoods[i]) + '\n')
                for key in sorted(optimal_parameters[i].keys()):
-                    pf.write(key + ': ' + 
-                             str(injection_parameters[i][key]) + ', ' +
-                             str(optimal_parameters[i][key]) + '\n')
+                    pf.write(key + ': \t \t' + 
+                             str(injection_parameters[i][key]) + '\t \t' +
+                             str(optimal_parameters[i][key]) + '\n \n')
