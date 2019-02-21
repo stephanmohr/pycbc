@@ -210,7 +210,7 @@ def optimize_to_files(injection_files, config_file,
     optimal_parameters = []
     for injection_file in injection_files:
         il, ol, ip, op = optimize_injection(injection_file, config_file)
-       injection_loglikelihoods.append(il)
+        injection_loglikelihoods.append(il)
         optimal_loglikelihoods.append(ol)
         injection_parameters.append(ip)
         optimal_parameters.append(op)
@@ -224,16 +224,17 @@ def optimize_to_files(injection_files, config_file,
     
     with open(parameter_file, 'w') as pf:
         for i in range(len(injection_files)):
-            pad = min([len(t) for t in optimal_parameters[i].keys()] + 
+            pad = max([len(t) for t in optimal_parameters[i].keys()] + 
                       [len('loglikelihood')]) + 1
-            s = "{0:{pad}} {1:10.3f} {2:10.3f}"
+            s = "{0:{pad}} {1:10.3f} {2:10.3f} \n"
             pf.write(injection_files[i] + '\n')
             pf.write(s.format("loglikelihood", 
                               injection_loglikelihoods[i], 
-                              optimal_loglikelihoods[i]), 
-                              pad = pad)
+                              optimal_loglikelihoods[i], 
+                              pad = pad))
             for key in sorted(optimal_parameters[i].keys()):
                 pf.write(s.format(key,
                                   injection_parameters[i][key],
-                                  optimal_parameters[i][key]), 
-                                  pad = pad)
+                                  optimal_parameters[i][key], 
+                                  pad = pad))
+            pf.write('\n')
