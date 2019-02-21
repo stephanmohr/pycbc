@@ -20,6 +20,9 @@ import logging
 from ConfigParser import NoSectionError, NoOptionError
 
 import numpy
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 
 from pycbc import filter as pyfilter
 from pycbc.waveform import NoWaveformError
@@ -357,6 +360,45 @@ class GaussianNoise(BaseDataModel):
         # current stats even if loglikelihood is never called
         self._current_stats.loglikelihood = lr + self.lognl
         return float(lr)
+    
+    def plot_frequency_series(self, fn):
+        """
+        Plots the frequency series of the current params and the frequency
+        series of the saved data, as well as their difference,
+        and saves this at fn + name of the detector.
+        """
+        wfs = self._waveform_generator.generate(**self.current_params)
+        for det, h in wfs.items():
+            fig, axs = plt.subplots(nrows=3)
+            axs[0].plot(h.real(), label='parameters')
+            axs[0].plot(self.data[det].real(), label='data')
+            axs[1].plot(h.imag(), label='parameters')
+            axs[1].plot(self.data[det].imag(), label='data')
+            axs[2].plot(numpy.abs(h - self.data[det]), label='difference')
+            axs[0].legend()
+            axs[1].legend()
+            axs[2].legend()
+            fig.savefig(fn + str(det), dpi=400)
+    
+    def plot_time_series(self, fn):
+        """
+        Plots the time series at the current parameters an the time series
+        of the saved data, as well as their difference.
+        """
+        wfs = self._waveform_generator.generate(**self.current_params)
+        for det, h in wfs.items():
+            fig, axs = plt.subplots(nrows=3)
+            h1 = h.to_timeseries()
+            d1 = self.data[det].to_timeseries()
+            axs[0].plot(h1.real(), label='parameters')
+            axs[0].plot(d1.real(), label='data')
+            axs[1].plot(h1.imag(), label='parameters')
+            axs[1].plot(d1.imag(), label='data')
+            axs[2].plot(numpy.abs(h1 - d1), label='difference')
+            axs[0].legend()
+            axs[1].legend()
+            axs[2].legend()
+            fig.savefig(fn + str(det), dpi=400)
 
     def _loglikelihood(self):
         r"""Computes the log likelihood of the paramaters,
