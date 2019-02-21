@@ -177,58 +177,63 @@ class model_optimizer:
 
 def optimize_injection(injection_file, config_file, f_min=20, 
                        sample_rate=2048, output_file="pseudo_out"):
-     m = setup_model(f_min=f_min, sample_rate=sample_rate, 
-                     injection_file=injection_file, 
-                     config_file=config_file, output_file=output_file)
-     f = h5py.File(injection_file)
-     par = dict(f.attrs.items())
-     mo = model_optimizer(m, par)
-     m.update(**par)
-     injection_loglikelihood = m.loglikelihood
-     optres = mo.optimize()
-     optimal_par = mo.dict_from_array(optres.x)
-     m.update(**optimal_par)
-     optimal_loglikelihood = m.loglikelihood
-     return (injection_loglikelihood, optimal_loglikelihood, 
-             par, optimal_par)
+    m = setup_model(f_min=f_min, sample_rate=sample_rate, 
+                    injection_file=injection_file, 
+                    config_file=config_file, output_file=output_file)
+    f = h5py.File(injection_file)
+    par = dict(f.attrs.items())
+    mo = model_optimizer(m, par)
+    m.update(**par)
+    injection_loglikelihood = m.loglikelihood
+    optres = mo.optimize()
+    optimal_par = mo.dict_from_array(optres.x)
+    m.update(**optimal_par)
+    optimal_loglikelihood = m.loglikelihood
+    return (injection_loglikelihood, optimal_loglikelihood, 
+            par, optimal_par)
 
 def optimize_to_files(injection_files, config_file, 
                       value_file, parameter_file):
-     """
-     For a list of injection files generates the models based on 
-     all of those files and the config file, calculates the value 
-     of the loglikelihood at the injection parameter and finds the 
-     optimum close to this value. 
-     Then outputs for all injections both the loglikelihood of the 
-     injection and the optimal loglikelihood to value_file, and 
-     outputs the loglikelihoods and the corresponding parameters 
-     to parameter_file.
-     """
-     injection_loglikelihoods = []
-     optimal_loglikelihoods = []
-     injection_parameters = []
-     optimal_parameters = []
-     for injection_file in injection_files:
-          il, ol, ip, op = optimize_injection(injection_file, config_file)
-          injection_loglikelihoods.append(il)
-          optimal_loglikelihoods.append(ol)
-          injection_parameters.append(ip)
-          optimal_parameters.append(op)
-     
-     with open(value_file, 'w') as vf:
-          for i in range(len(injection_files)):
-               vf.write(str(injection_files[i]) + "\n")
-               vf.write(str(injection_loglikelihoods[i]) + "\n")
-               vf.write(str(optimal_loglikelihoods[i]) + "\n")
-               vf.write("\n")
-     
-     with open(parameter_file, 'w') as pf:
-          for i in range(len(injection_files)):
-               pf.write(injection_files[i] + '\n')
-               pf.write('loglikelihood: \t \t' + 
-                        str(injection_loglikelihoods[i]) + '\t \t' +
-                        str(optimal_loglikelihoods[i]) + '\n')
-               for key in sorted(optimal_parameters[i].keys()):
-                    pf.write(key + ': \t \t' + 
-                             str(injection_parameters[i][key]) + '\t \t' +
-                             str(optimal_parameters[i][key]) + '\n \n')
+    """
+    For a list of injection files generates the models based on 
+    all of those files and the config file, calculates the value 
+    of the loglikelihood at the injection parameter and finds the 
+    optimum close to this value. 
+    Then outputs for all injections both the loglikelihood of the 
+    injection and the optimal loglikelihood to value_file, and 
+    outputs the loglikelihoods and the corresponding parameters 
+    to parameter_file.
+    """
+    injection_loglikelihoods = []
+    optimal_loglikelihoods = []
+    injection_parameters = []
+    optimal_parameters = []
+    for injection_file in injection_files:
+        il, ol, ip, op = optimize_injection(injection_file, config_file)
+       injection_loglikelihoods.append(il)
+        optimal_loglikelihoods.append(ol)
+        injection_parameters.append(ip)
+        optimal_parameters.append(op)
+    
+    with open(value_file, 'w') as vf:
+        for i in range(len(injection_files)):
+            vf.write(str(injection_files[i]) + "\n")
+            vf.write(str(injection_loglikelihoods[i]) + "\n")
+            vf.write(str(optimal_loglikelihoods[i]) + "\n")
+            vf.write("\n")
+    
+    with open(parameter_file, 'w') as pf:
+        for i in range(len(injection_files)):
+            pad = min([len(t) for t in optimal_parameters[i].keys()] + 
+                      [len('loglikelihood')]) + 1
+            s = "{0:{pad}} {1:10.3f} {2:10.3f}"
+            pf.write(injection_files[i] + '\n')
+            pf.write(s.format("loglikelihood", 
+                              injection_loglikelihoods[i], 
+                              optimal_loglikelihoods[i]), 
+                              pad = pad)
+            for key in sorted(optimal_parameters[i].keys()):
+                pf.write(s.format(key,
+                                  injection_parameters[i][key],
+                                  optimal_parameters[i][key]), 
+                                  pad = pad)
