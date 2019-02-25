@@ -816,12 +816,12 @@ class UniformChiPChiEffGamma(Arbitrary):
 
 class UniformQMChiPChiEff(UniformChiPChiEffGamma):
     r"""A distribution that is sampled in :math:`\chi_{\mathrm{eff}}`, 
-    :math:`\chi_p`, q and m_total, such that the density stays 
+    :math:`\chi_p`, q and mtotal, such that the density stays 
     constant with respect to these parameters inside the allowed 
     parameter space. 
 
     Keeping all other parameters fixed and varying only 
-    :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, q or m_total, 
+    :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, q or mtotal, 
     the density will stay constant. This does not imply that the 
     marginals of :math:`\chi_{\mathrm{eff}}` or :math:`\chi_p` 
     are uniform, nor that the two parameters are independent.
@@ -836,8 +836,8 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
         a Bounds instance or a tuple) giving the minimum and maximum 
         values to use for q. If the latter, a Uniform distribution will
         be used. 
-    m_total : BoundedDist, Bounds, or tuple
-        The distribution or bounds to use for m_total. Same Syntax as for q.
+    mtotal : BoundedDist, Bounds, or tuple
+        The distribution or bounds to use for mtotal. Same Syntax as for q.
     chi_eff : BoundedDist, Bounds or tuple; optional
         The distribution or bounds to use for :math:`\chi_{eff}`. Syntax is the 
         same as mass1, except that None may also be pased. In that case, 
@@ -860,19 +860,19 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
     """
     name = "uniform_q_mtotal_chip_chieff" 
     
-    def __init__(self,q=None,m_total=None,**kwargs):
+    def __init__(self,q=None,mtotal=None,**kwargs):
         if isinstance(q, BoundedDist):
             self.q_distr = q 
         else: 
             self.q_distr = Uniform(q=q) 
-        if isinstance(m_total, BoundedDist):
-            self.mtotal_distr = m_total
+        if isinstance(mtotal, BoundedDist):
+            self.mtotal_distr = mtotal
         else: 
-            self.mtotal_distr = Uniform(m_total=m_total) 
+            self.mtotal_distr = Uniform(mtotal=mtotal) 
         q_bounds = self.q_distr.bounds['q']
-        m_total_bounds = self.mtotal_distr.bounds['m_total']
+        mtotal_bounds = self.mtotal_distr.bounds['mtotal']
         mass_bounds = (0,
-                       m_total_bounds[1]) # not optimal
+                       mtotal_bounds[1]) # not optimal
         super(UniformQMChiPChiEff, self).__init__(mass1_bounds=mass_bounds,
             mass2_bounds=mass_bounds,**kwargs)
     
@@ -890,12 +890,12 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
         except KeyError:
             q = self.q_distr.rvs(size=size)['q'] 
         try:
-            m_total = kwargs['m_total'] 
+            mtotal = kwargs['mtotal'] 
         except KeyError:
-            m_total = self.mtotal_distr.rvs(size=size)['m_total']
+            mtotal = self.mtotal_distr.rvs(size=size)['mtotal']
         primary_is_2 = numpy.random.randint(2,size=size)
-        mass1 = numpy.where(primary_is_2, 1./(1.+q)*m_total, q/(1.+q)*m_total)
-        mass2 = numpy.where(primary_is_2, q/(1.+q)*m_total, 1./(1.+q)*m_total)
+        mass1 = numpy.where(primary_is_2, 1./(1.+q)*mtotal, q/(1.+q)*mtotal)
+        mass2 = numpy.where(primary_is_2, q/(1.+q)*mtotal, 1./(1.+q)*mtotal)
         return mass1, mass2 
 
     @classmethod 
@@ -927,24 +927,24 @@ class UniformQMChiPChiEff(UniformChiPChiEffGamma):
             raise ValueError("Not all parameters used by this distribution "
                              "included in tag portion of section name")
         q = get_param_bounds_from_config(cp, section, tag, 'q') 
-        m_total = get_param_bounds_from_config(cp, section, tag, 'm_total') 
+        mtotal = get_param_bounds_from_config(cp, section, tag, 'mtotal') 
         chi_eff = get_param_bounds_from_config(cp, section, tag, 'chi_eff')
         chi_p = get_param_bounds_from_config(cp, section, tag, 'chi_p')
         if cp.has_option('-'.join([section, tag]), 'nsamples'):
             nsamples = int(cp.get('-'.join([section, tag]), 'nsamples'))
         else:
             nsamples = None
-        return cls(q=q,m_total=m_total, chi_eff=chi_eff, 
+        return cls(q=q,mtotal=mtotal, chi_eff=chi_eff, 
                    chi_p=chi_p, nsamples=nsamples) 
 
 class UniformComponentMassesChiPChiEff(UniformChiPChiEffGamma):
     r"""A distribution that is sampled in :math:`\chi_{\mathrm{eff}}`, 
-    :math:`\chi_p`, q and m_total, such that the density stays 
+    :math:`\chi_p`, q and mtotal, such that the density stays 
     constant with respect to these parameters inside the allowed 
     parameter space. 
 
     Keeping all other parameters fixed and varying only 
-    :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, q or m_total, 
+    :math:`\chi_{\mathrm{eff}}`, :math:`\chi_p`, q or mtotal, 
     the density will stay constant. This does not imply that the 
     marginals of :math:`\chi_{\mathrm{eff}}` or :math:`\chi_p` 
     are uniform, nor that the two parameters are independent.
