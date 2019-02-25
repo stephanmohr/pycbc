@@ -34,7 +34,7 @@ from setuptools import find_packages
 PY3 = sys.version_info[0] == 3
 
 requires = []
-setup_requires = ['numpy>=1.13.0',]
+setup_requires = ['numpy>=1.13.0,<1.15.3',]
 install_requires =  setup_requires + ['Mako>=1.0.1',
                       'cython',
                       'decorator>=3.4.2',
@@ -122,7 +122,7 @@ def get_version_info():
         vinfo = _version_helper.generate_git_version_info()
     except:
         vinfo = vdummy()
-        vinfo.version = '1.13.3dev'
+        vinfo.version = '1.13.dev4'
         vinfo.release = 'False'
 
     with open('pycbc/version.py', 'w') as f:
@@ -202,13 +202,17 @@ extras_require = {'cuda': ['pycuda>=2015.1', 'scikit-cuda']}
 # do the actual work of building the package
 VERSION = get_version_info()
 
-cythonext = ['waveform.spa_tmplt', 'types.array']
+cythonext = ['waveform.spa_tmplt',
+             'waveform.utils',
+             'types.array',
+             'filter.matchedfilter']
 ext = []
 for name in cythonext:
     e = Extension("pycbc.%s_cpu" % name,
                   ["pycbc/%s_cpu.pyx" % name.replace('.', '/')],
                   extra_compile_args=[ '-O3', '-w', '-msse4.2',
-                                 '-ffast-math', '-ffinite-math-only'])
+                                 '-ffast-math', '-ffinite-math-only'],
+                  compiler_directives={'embedsignature': True})
     ext.append(e)
 
 setup (

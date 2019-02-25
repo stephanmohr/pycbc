@@ -27,6 +27,7 @@ This modules provides a library of functions that calculate waveform parameters
 from other parameters. All exposed functions in this module's namespace return
 one parameter given a set of inputs.
 """
+from __future__ import division
 
 import copy
 import numpy
@@ -77,6 +78,19 @@ def formatreturn(arg, input_is_array=False):
     if not input_is_array and arg.size == 1:
         arg = arg.item()
     return arg
+
+#
+# =============================================================================
+#
+#                           Fundamental conversions
+#
+# =============================================================================
+#
+
+def sec_to_year(sec):
+    """ Converts number of seconds to number of years """
+    return sec / lal.YRJUL_SI
+
 
 #
 # =============================================================================

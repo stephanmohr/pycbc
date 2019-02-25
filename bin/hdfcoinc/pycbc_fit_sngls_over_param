@@ -47,8 +47,9 @@ parser.add_argument("--fit-param",
                     help="Parameter over which to regress the background "
                          "fit coefficients. Required. Either read from "
                          "template fit file or choose from mchirp, mtotal, "
-                         "template_duration, a frequency cutoff in pnutils or "
-                         "a frequency function in LALSimulation.")
+                         "tau_0, tau_3, template_duration, a frequency "
+                         "cutoff in pnutils or a frequency function in "
+                         "LALSimulation.")
 parser.add_argument("--approximant", default="SEOBNRv4",
                     help="Approximant for template duration. Default SEOBNRv4")
 parser.add_argument("--f-lower", type=float, default=0.,
@@ -175,6 +176,8 @@ outfile = h5py.File(args.output, 'w')
 outfile.create_dataset('template_id', data=tid)
 outfile.create_dataset('count_above_thresh', data=nabove_smoothed)
 outfile.create_dataset('fit_coeff', data=1. / np.array(invalpha_smoothed))
+outfile.create_dataset('param_val', data=(np.exp(parvals) if args.log_param
+    else parvals))
 
 # add metadata, some is inherited from template level fit
 outfile.attrs.create('ifo', data=ifo)
