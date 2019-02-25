@@ -702,6 +702,12 @@ def create_multidim_plot(parameters, samples, labels=None,
                        edgecolors='none',alpha=alpha,
                        zorder=100)
 
+        if mark_point is not None: 
+            ax.scatter(x=mark_point[px], y=mark_point[py],
+                       c=mark_point_color, s=30,
+                       edgecolors='none',alpha=alpha,
+                       zorder=1000) 
+                
         if expected_parameters is not None:
             try:
                 ax.axvline(expected_parameters[px], lw=1.5,

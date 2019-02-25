@@ -214,7 +214,7 @@ if len(opts.input_file) > 1:
                labels=labels)
 
 # set DPI
-fig.set_dpi(500)
+fig.set_dpi(300)
 
 # save
 metadata.save_fig_with_metadata(
