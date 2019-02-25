@@ -182,6 +182,8 @@ def optimize_injection(injection_file, config_file, f_min=20,
                     config_file=config_file, output_file=output_file)
     f = h5py.File(injection_file)
     par = dict(f.attrs.items())
+    del par['f_lower']
+    del par['f_ref']
     mo = model_optimizer(m, par)
     m.update(**par)
     injection_loglikelihood = m.loglikelihood
