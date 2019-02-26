@@ -17,7 +17,6 @@ from pycbc import (distributions, transforms, fft,
                    opt, psd, scheme, strain, weave)
 from pycbc.waveform import generator
 from pycbc.types import frequencyseries
-from pycbc.inference.models import GaussianNoise
 
 from pycbc import __version__
 # from pycbc import inference
@@ -132,6 +131,7 @@ def setup_model(f_min=20,sample_rate=2048,injection_file="injection.hdf",
 
 
 def setup_model_from_result(filename):
+    from pycbc.inference.models import GaussianNoise
     f = h5py.File(filename)
     signal = dict()
     psds = dict()
