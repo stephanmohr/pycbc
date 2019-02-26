@@ -545,6 +545,29 @@ def chi_p_from_xi1_xi2(xi1, xi2):
     return formatreturn(chi_p, input_is_array)
 
 
+def chi_p_from_zeta1_zeta2_mass1_mass2(zeta1, zeta2, mass1, mass2):
+    """
+    Returns the effective precession spin from the perpendicular spin 
+    amplitudes and the masses.
+    """
+    zetaprime = primary_spin(mass1, mass2, zeta1, zeta2)
+    zetasec = secondary_spin(mass1, mass2, zeta1, zeta2)
+    mask = mass1 > mass2 
+    q = mass2 / mass1
+    q[mask] = mass1 / mass2
+    chihat = (4*q + 3)/(4*q + 3*q**2) * zetasec 
+    chi_p = zetaprime
+    mask = zetaprime < chihat 
+    chi_p[mask] = chihat
+    return chi_p
+
+def chi_eff_from_spin1z_spin2z_mass1_mass2(spin1z, spin2z, mass1, mass2):
+    """
+    Returns the effective aligned spin component 
+    """
+    return (mass1*spin1z + mass2*spin2z ) / (mass1 + mass2)
+
+
 def phi1_from_phi_a_phi_s(phi_a, phi_s):
     """Returns the angle between the x-component axis and the in-plane
     spin for the primary mass from phi_s and phi_a.
