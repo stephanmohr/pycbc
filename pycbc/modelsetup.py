@@ -17,6 +17,7 @@ from pycbc import (distributions, transforms, fft,
                    opt, psd, scheme, strain, weave)
 from pycbc.waveform import generator
 from pycbc.types import frequencyseries
+from pycbc.inference.models import GaussianNoise
 
 from pycbc import __version__
 # from pycbc import inference
