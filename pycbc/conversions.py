@@ -552,9 +552,7 @@ def chi_p_from_zeta1_zeta2_mass1_mass2(zeta1, zeta2, mass1, mass2):
     """
     zetaprime = primary_spin(mass1, mass2, zeta1, zeta2)
     zetasec = secondary_spin(mass1, mass2, zeta1, zeta2)
-    mask = mass1 > mass2 
-    q = mass2 / mass1
-    q[mask] = mass1[mask] / mass2[mask]
+    q = q_from_mass1_mass2(mass1, mass2)
     chihat = (4*q + 3)/(4*q + 3*q**2) * zetasec 
     chi_p = zetaprime
     mask = zetaprime < chihat 
