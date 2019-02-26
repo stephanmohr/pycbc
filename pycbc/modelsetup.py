@@ -149,6 +149,7 @@ def setup_model_from_result(filename):
             delta_f, epoch)
     model = GaussianNoise(variable_params, signal, 20, psds=psds,
                           static_params=static_params)
+    return model
 
 
 class model_optimizer:
