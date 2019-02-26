@@ -1309,4 +1309,6 @@ __all__ = ['dquadmon_from_lambda', 'lambda_tilde', 'primary_mass',
            'optimal_dec_from_detector', 'optimal_ra_from_detector',
            'chi_eff_from_spherical', 'chi_p_from_spherical',
            'nltides_gw_phase_diff_isco',
-          ]
+           'chi_p_from_zeta1_zeta2_mass1_mass2',
+           'chi_eff_from_spin1z_spin2z_mass1_mass2'
+           ]
