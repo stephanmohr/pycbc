@@ -16,6 +16,7 @@ import pycbc
 from pycbc import (distributions, transforms, fft,
                    opt, psd, scheme, strain, weave)
 from pycbc.waveform import generator
+from pycbc.types import frequencyseries
 
 from pycbc import __version__
 # from pycbc import inference
@@ -117,9 +118,9 @@ def setup_model(f_min=20,sample_rate=2048,injection_file="injection.hdf",
            '--psd-inverse-length',str(4),
            '--fake-strain','H1:zeroNoise','L1:zeroNoise',
            '--fake-strain-seed',str(44),
-           '--strain-high-pass',str(f_min),
+           '--strain-high-pass',str(15),
            '--sample-rate',str(sample_rate),
-           '--low-frequency-cutoff','15',
+           '--low-frequency-cutoff',str(f_min),
            '--channel-name','H1:FOOBAR','L1:FOOBAR',
            '--injection-file',str(injection_file),
            '--config-file',str(config_file),
@@ -127,6 +128,26 @@ def setup_model(f_min=20,sample_rate=2048,injection_file="injection.hdf",
            '--processing-scheme','cpu',
            '--nprocesses',str(1)]
     return setup_model_from_arg(arg)
+
+
+def setup_model_from_result(filename):
+    f = h5py.File(filename)
+    signal = dict()
+    psds = dict()
+    st = ['approximant', 'f_lower', 'f_ref']
+    static_params = {key: f['injections'].attrs[key] for key in st}
+    variable_params = list(f.attrs['variable_params'])
+    for det in f['data'].keys():
+        delta_f = f['data'][det]['stilde'].attrs['delta_f']
+        epoch = f['data'][det]['stilde'].attrs['epoch']
+        psds[det] = frequencyseries.FrequencySeries(
+            f['data'][det]['psds']['0'],
+            delta_f, epoch)
+        signal[det] = frequencyseries.FrequencySeries(
+            f['data'][det]['stilde'],
+            delta_f, epoch)
+    model = GaussianNoise(variable_params, signal, 20, psds=psds,
+                          static_params=static_params)
 
 
 class model_optimizer:
@@ -175,15 +196,7 @@ class model_optimizer:
         optRes = scipy.optimize.minimize(self.func, self.x, method='Nelder-Mead')
         return optRes
 
-def optimize_injection(injection_file, config_file, f_min=20, 
-                       sample_rate=2048, output_file="pseudo_out"):
-    m = setup_model(f_min=f_min, sample_rate=sample_rate, 
-                    injection_file=injection_file, 
-                    config_file=config_file, output_file=output_file)
-    f = h5py.File(injection_file)
-    par = dict(f.attrs.items())
-    del par['f_lower']
-    del par['f_ref']
+def optimize_model_par(m, par):
     mo = model_optimizer(m, par)
     m.update(**par)
     injection_loglikelihood = m.loglikelihood
@@ -193,6 +206,25 @@ def optimize_injection(injection_file, config_file, f_min=20,
     optimal_loglikelihood = m.loglikelihood
     return (injection_loglikelihood, optimal_loglikelihood, 
             par, optimal_par)
+
+def optimize_injection(injection_file, config_file, f_min=20, 
+                       sample_rate=2048, output_file="pseudo_out"):
+    m = setup_model(f_min=f_min, sample_rate=sample_rate, 
+                    injection_file=injection_file, 
+                    config_file=config_file, output_file=output_file)
+    f = h5py.File(injection_file)
+    par = dict(f.attrs.items())
+    del par['f_lower']
+    del par['f_ref']
+    return optimize_model_par(m, par)
+
+def optimize_results(result_file):
+    m = setup_model_from_result(result_file)
+    f = h5py.File(result_file)
+    par = dict(f['injection'].attrs.items())
+    del par['f_lower']
+    del par['f_ref']
+    return optimize_model_par(m, par)
 
 def optimize_to_files(injection_files, config_file, 
                       value_file, parameter_file):
