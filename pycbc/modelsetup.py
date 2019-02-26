@@ -222,7 +222,7 @@ def optimize_injection(injection_file, config_file, f_min=20,
 def optimize_results(result_file):
     m = setup_model_from_result(result_file)
     f = h5py.File(result_file)
-    par = dict(f['injection'].attrs.items())
+    par = dict(f['injections'].attrs.items())
     del par['f_lower']
     del par['f_ref']
     return optimize_model_par(m, par)
