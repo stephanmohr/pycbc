@@ -249,3 +249,112 @@ class UniformRadius(UniformPowerLaw):
         super(UniformRadius, self).__init__(dim=3, **params)
 
 __all__ = ["UniformPowerLaw", "UniformRadius"]
+
+
+class TruncatedPowerLaw(bounded.BoundedDist):
+    r"""
+
+    """
+    name = "truncated_power_law" 
+    def __init__(self, dim=None, **params):
+        super(TruncatedPowerLaw, self).__init__(**params) 
+        self.dim = dim # what is this even for? 
+        self._norm = 1.0 
+        self._lognorm = 0.0 
+        # only bounds from 0 to 1 are possible.
+        # otherwise sampling algorithm breaks down.
+        for p in self._params:
+            bnds = self._bounds[p]
+            if bnds.min != 0. or bnds.max != 1.:
+                raise ValueError("Bounds for parameter " + str(p) + 
+                                 " are not (0,1). Only bounds (0,1) are "
+                                 "supported.")
+            if bnds.cyclic == True:
+                raise ValueError("Bounds for parameter " + str(p) +
+                                 " are cyclic. Cyclic bounds are not allowed.")
+
+    @property 
+    def norm(self):
+        return self._norm 
+    
+    @property 
+    def lognorm(self):
+        return self._lognorm 
+    
+    def rvs(self, size=1, B=None, param=None): 
+        """
+        Gives a set of random values drawn from this distribution. 
+        The distribution depends on the truncation value B. 
+
+        Parameters
+        ---------- 
+        size : {1, int} 
+            The number of values to generate; default is 1. 
+        B : {None, float or list, arr of size size}
+            Provides the truncation values for each draw. The same 
+            truncation value is used for all parameters. If arr or list 
+            of appropriate size is passed, will use each element for a 
+            separate draw. Otherwise, will use the same B for all draws.
+            If B is None, use B = 1 (not truncated). 
+            Default is None.
+        param : {None, string} 
+            If provided will just return values for the given parameter. 
+            Otherwise, returns random values for each parameter. 
+        
+        Returns 
+        -------
+        structured array 
+            The random values on a structured numpy array.
+        """
+        if param is not None:
+            dtype = [(param, float)] 
+        else:
+            dtype = [(p,float) for p in self.params] 
+        arr = numpy.zeros(size, dtype=dtype) 
+        if isinstance(B,list):
+            A = numpy.ones(size)
+            A[0:len(B)] = numpy.array(B)
+            B = A 
+        if isinstance(B,(int,float)):
+            B = numpy.ones(size)*B
+        for (p,_) in dtype:
+            U = numpy.random.uniform(size=size) 
+            X = (U<=B)*(U/B)**2 + (U>B)*U  
+            arr[p] = X 
+        return arr 
+    
+    def _pdf(self,**kwargs):
+        """
+        Return the pdf at the given values. The keyword arguments must contain
+        all of the parameters in self's params. 
+        Unrecognized arguments are ignored.
+        """
+        pass 
+    
+    @classmethod 
+    def from_config(cls, cp, section, variable_args): 
+        """ 
+        Returns a distribution based on a configuration file. The parameters 
+        for the distribution are retrieved from the section titled
+        "[`section`-`variable_params`]" in the config file.
+
+        Parameters 
+        ---------- 
+        cp : pycbc.workflow.WorkflowConfigParser 
+            A parsed configuration file that contains the distribution
+            options. 
+        section : str 
+            Name of the section in the configuration file.
+        variable_args : str
+            The names of the parameters for this distribution, separaeted by
+            `prior.VARARGS_DELIM`. These must appear in the "tag" part 
+            of the section header. 
+
+        Returns
+        -------
+        Uniform 
+            A distribution instance from the pycbc.inference.prior module.
+        """ 
+        return super(TruncatedPowerLaw, cls).from_config(cp,section,
+                                                         variable_args, 
+                                                         bounds_required=True) 

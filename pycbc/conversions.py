@@ -608,6 +608,43 @@ def spin2y_from_mass1_mass2_xi2_phi_a_phi_s(mass1, mass2, xi2, phi_a, phi_s):
     phi2 = phi2_from_phi_a_phi_s(phi_a, phi_s)
     return chi_perp * numpy.sin(phi2)
 
+def secondary_spin(mass1, mass2, spin1, spin2):
+    """Returns the dimensionless spin of the secondary mass."""
+    mass1, mass2, spin1, spin2, input_is_array = ensurearray(
+        mass1, mass2, spin1, spin2)
+    ss = copy.copy(spin2)
+    mask = mass1 < mass2
+    ss[mask] = spin1[mask]
+    return formatreturn(ss, input_is_array)
+
+def chi_p_from_chi1_perp_chi2_perp_q(chi1_perp,chi2_perp,q):
+    """Returns the effective precession parameter
+    q is defined as mass1 / mass2 and may be two sided, i.e. 
+    q can be both smaller and larger than one.
+    """
+    chi1_perp, chi2_perp, q, input_is_array = ensurearray(
+        chi1_perp,chi2_perp,q)
+    chi_p = copy.copy(chi1_perp)
+    mask = q > 1.
+    B = (4 + 3*q)/(4*q**2 + 3*q)
+    chi_p[mask] = numpy.maximum(chi2_perp[mask]*B[mask],chi1_perp[mask])
+    mask2 = numpy.logical_not(mask)
+    # In this case B(1/q) = 1
+    chi_p[mask2] = numpy.maximum(chi1_perp[mask2]/B[mask2],chi2_perp[mask2])
+    return formatreturn(chi_p , input_is_array)
+
+def spinx_from_chi_perp_phi(chi_perp,phi):
+    """
+    Returns the x-component of the spin.
+    """ 
+    return chi_perp * numpy.cos(phi) 
+
+def spiny_from_chi_perp_phi(chi_perp,phi):
+    """
+    Return the y-component of the spin.
+    """ 
+    return chi_perp * numpy.sin(phi) 
+
 
 def dquadmon_from_lambda(lambdav):
     r"""Return the quadrupole moment of a neutron star given its lambda
@@ -1287,4 +1324,6 @@ __all__ = ['dquadmon_from_lambda', 'lambda_tilde', 'primary_mass',
            'optimal_dec_from_detector', 'optimal_ra_from_detector',
            'chi_eff_from_spherical', 'chi_p_from_spherical',
            'nltides_gw_phase_diff_isco',
+           'chi_p_from_chi1_perp_chi2_perp_q',
+           'spinx_from_chi_perp_phi','spiny_from_chi_perp_phi'
           ]
