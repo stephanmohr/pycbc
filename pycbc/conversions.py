@@ -143,6 +143,13 @@ def mchirp_from_mass1_mass2(mass1, mass2):
     """Returns the chirp mass from mass1 and mass2."""
     return eta_from_mass1_mass2(mass1, mass2)**(3./5) * (mass1+mass2)
 
+def mchirp_from_mtotal_q(mtotal, q):
+    """Returns the chirp mass from the total mass and q. """
+    return mtotal * (q/(1+q)**2)**(3./5) 
+
+def mtotal_from_mchirp_q(mchirp, q):
+    """Returns the total mass from the chirp mass and q. """
+    return mchirp * ((1+q)**2/q)**(3./5)
 
 def mass1_from_mtotal_q(mtotal, q):
     """Returns a component mass from the given total mass and mass ratio.
@@ -1296,6 +1303,7 @@ __all__ = ['dquadmon_from_lambda', 'lambda_tilde', 'primary_mass',
            'secondary_mass', 'mtotal_from_mass1_mass2',
            'q_from_mass1_mass2', 'invq_from_mass1_mass2',
            'eta_from_mass1_mass2', 'mchirp_from_mass1_mass2',
+           'mchirp_from_mtotal_q', 'mtotal_from_mchirp_q',
            'mass1_from_mtotal_q', 'mass2_from_mtotal_q',
            'mass1_from_mtotal_eta', 'mass2_from_mtotal_eta',
            'mtotal_from_mchirp_eta', 'mass1_from_mchirp_eta',
