@@ -1423,7 +1423,7 @@ class CartesianSpin1ToPolarSpin1(PolarSpin1ToCartesianSpin1):
         sx, sy = self._inputs
         out[zeta] = numpy.sqrt(maps[sx]**2 + maps[sy]**2)
         out[phi]  = coordinates.cartesian_to_spherical_azimuthal(maps[sx], maps[sy])
-        return self.forma_output(maps, out)
+        return self.format_output(maps, out)
 
     def inverse_transform(self, maps):
         out = dict()
