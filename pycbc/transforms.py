@@ -930,6 +930,63 @@ class CartesianSpinToChiP(BaseTransform):
                              maps[parameters.spin2x], maps[parameters.spin2y])
         return self.format_output(maps, out)
 
+class PolarSpin1ToCartesianSpin1(BaseTransform):
+    """ Converts polar spin parameters (magnitude and angle) to spinx and spiny.
+    """
+    name = "polar_spin_1_to_cartesian_spin_1"
+    _inputs = ["zeta1", "phi1"]
+    _outputs = [parameters.spin1x, parameters.spin1y]
+
+    def transform(self, maps):
+        """This function transforms from polar to cartesian spins.
+
+        Parameters
+        ----------
+        maps : a mapping object
+
+        Returns
+        -------
+        out : dict
+            A dict with key as parameter name and value as numpy.array or float
+            of transformed values.
+        """
+        out = dict()
+        zeta, phi = self._inputs
+        sx, sy = self._outputs
+        out[sx] = maps[zeta] * numpy.cos(maps[phi])
+        out[sy] = maps[zeta] * numpy.sin(maps[phi])
+        return self.format_output(maps, out) 
+
+    def inverse_transform(self, maps):
+        """ This function transforms from cartesian to polar spins.
+
+        Parameters
+        ----------
+        maps : a mapping object
+
+        Returs
+        ------
+        out : dict
+            A dict with key as parameter name and value as numpy.array or float
+            of transformed values.
+        """
+        out = dict()
+        sx, sy = self._outputs
+        zeta, phi = self._inputs
+        out[zeta] = numpy.sqrt(maps[sx]**2 + maps[sy]**2)
+        out[phi]  = coordinates.cartesian_to_spherical_azimuthal(maps[sx], maps[xy])
+        return self.format_output(maps, out)
+
+
+class PolarSpin2ToCartesianSpin2(PolarSpin1ToCartesianSpin1):
+    """ Converts polar spin components (magnitude and azimuthal angle) to 
+    cartesian spin parameters. This class only transforms spins for the 
+    second component mass.
+    """
+    name = "polar_spin_2_to_cartesian_spin_2"
+    _inputs = ['zeta2', 'phi2']
+    _outputs = [parameters.spin2x, parameters.spin2y]
+
 
 class Logit(BaseTransform):
     """Applies a logit transform from an `inputvar` parameter to an `outputvar`
@@ -1352,6 +1409,39 @@ class ChiPToCartesianSpin(CartesianSpinToChiP):
     inverse_jacobian = inverse.jacobian
 
 
+class CartesianSpin1ToPolarSpin1(PolarSpin1ToCartesianSpin1):
+    """ The inverse of PolarSpin1ToCartesianSpin1.
+    """
+    name = "cartesian_spin_1_to_polar_spin_1"
+    inverse = PolarSpin1ToCartesianSpin1
+    _inputs = inverse._outputs
+    _outputs = inverse._inputs
+
+    def transform(self, maps):
+        out = dict()
+        zeta, phi = self._outputs
+        sx, sy = self._inputs
+        out[zeta] = numpy.sqrt(maps[sx]**2 + maps[sy]**2)
+        out[phi]  = coordinates.cartesian_to_spherical_azimuthal(maps[sx], maps[sy])
+        return self.forma_output(maps, out)
+
+    def inverse_transform(self, maps):
+        out = dict()
+        zeta, phi = self._outputs
+        sx, sy = self._inputs
+        out[sx] = maps[zeta] * numpy.cos(maps[phi])
+        out[sy] = maps[zeta] * numpy.sin(maps[phi])
+        return self.format_output(maps, out)
+
+class CartesianSpin2ToPolarSpin2(CartesianSpin1ToPolarSpin1):
+    """ The inverse of PolarSpin2ToCartesianSpin2.
+    """
+    name = "cartesian_spin_2_to_polar_spin_2"
+    inverse = PolarSpin2ToCartesianSpin2
+    _inputs = inverse._outputs
+    _outputs = inverse._inputs
+
+
 class Logistic(Logit):
     """Applies a logistic transform from an `input` parameter to an `output`
     parameter. This is the inverse of the logit transform.
@@ -1465,6 +1555,8 @@ AlignedMassSpinToCartesianSpin.inverse = CartesianSpinToAlignedMassSpin
 PrecessionMassSpinToCartesianSpin.inverse = CartesianSpinToPrecessionMassSpin
 ChiPToCartesianSpin.inverse = CartesianSpinToChiP
 Logit.inverse = Logistic
+PolarSpin1ToCartesianSpin1.inverse = CartesianSpin1ToPolarSpin1
+PolarSpin2ToCartesianSpin2.inverse = CartesianSpin2ToPolarSpin2
 
 
 #
@@ -1494,6 +1586,10 @@ transforms = {
     CartesianSpinToPrecessionMassSpin.name : CartesianSpinToPrecessionMassSpin,
     ChiPToCartesianSpin.name : ChiPToCartesianSpin,
     CartesianSpinToChiP.name : CartesianSpinToChiP,
+    PolarSpin1ToCartesianSpin1.name : PolarSpin1ToCartesianSpin1,
+    PolarSpin2ToCartesianSpin2.name : PolarSpin2ToCartesianSpin2,
+    CartesianSpin1ToPolarSpin1.name : CartesianSpin1ToPolarSpin1,
+    CartesianSpin2ToPolarSpin2.name : CartesianSpin2ToPolarSpin2,
     Logit.name : Logit,
     Logistic.name : Logistic,
 }
