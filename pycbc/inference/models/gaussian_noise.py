@@ -258,7 +258,9 @@ class GaussianNoise(BaseDataModel):
                             for det in data}
             numpy.seterr(**numpysettings)
         # whiten the data
+        print(self._data)
         for det in self._data:
+            print(det)
             self._data[det][kmin:kmax] *= self._weight[det][kmin:kmax]
 
     @property
