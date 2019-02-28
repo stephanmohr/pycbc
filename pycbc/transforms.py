@@ -412,6 +412,57 @@ class MchirpQToMass1Mass2(BaseTransform):
         m2 = maps[parameters.mass2]
         return conversions.mchirp_from_mass1_mass2(m1, m2)/m2**2.
 
+
+class MtotalQToMass1Mass2(BaseTransform):
+    """ Converts total mass and mass ratio to component masses.
+    """
+    name = "mtotal_q_to_mass1_mass2"
+    _inputs = ['mtotal', parameters.q]
+    _outputs = [parameters.mass1, parameters.mass2]
+
+    def transform(self, maps):
+        """This function transforms from total mass and mass ratio to component
+        masses.
+
+        Parameters
+        ----------
+        maps : a mapping objecty([ 2.])}
+
+        Returns
+        -------
+        out : dict
+            A dict with key as parameter name and value as numpy.array or float
+            of transformed values.
+        """
+        out = dict()
+        out[parameters.mass1] = conversions.mass1_from_mtotal_q(
+            maps['mtotal'], maps[parameters.q])
+        out[parameters.mass2] = conversions.mass2_from_mtotal_q(
+            maps['mtotal'], maps[parameters.q])
+        return self.format_output(maps, out)
+    
+    def inverse_transform(self, maps):
+        """This function transforms from component masses to total mass and
+        mass ratio.
+
+        Parameters
+        ----------
+        maps : a mapping object
+
+        Returns
+        -------
+        out : dict
+            A dict with key as parameter name and value as numpy.array or float
+            of transformed values.
+        """
+        out = dict()
+        m1 = maps[parameters.mass1]
+        m2 = maps[parameters.mass2]
+        out['mtotal'] = m1 + m2
+        out[parameters.q] = m1 / m2
+        return self.format_output(maps, out)
+
+
 class MchirpQToMtotalQ(BaseTransform):
     """ Converts chirp mass and mass ratio to total mass and mass ratio
     """
@@ -1361,6 +1412,16 @@ class Mass1Mass2ToMchirpQ(MchirpQToMass1Mass2):
     jacobian = inverse.inverse_jacobian
     inverse_jacobian = inverse.jacobian
 
+class Mass1Mass2ToMtotalQ(MtotalQToMass1Mass2):
+    """The inverse of MtotalQToMass1Mass2.
+    """
+    name = "mass1_mass2_to_mtotal_q"
+    inverse = MtotalQToMass1Mass2
+    _inputs = inverse._outputs
+    _outputs = inverse._inputs
+    transform = inverse.inverse_transform
+    inverse_transform = inverse.transform
+
 class MtotalQToMchirpQ(MchirpQToMtotalQ):
     """The inverse of MchirpQToMtotalQ
     """
@@ -1640,7 +1701,7 @@ ChiPToCartesianSpin.inverse = CartesianSpinToChiP
 Logit.inverse = Logistic
 PolarSpin1ToCartesianSpin1.inverse = CartesianSpin1ToPolarSpin1
 PolarSpin2ToCartesianSpin2.inverse = CartesianSpin2ToPolarSpin2
-
+MtotalQToMass1Mass2.inverse = Mass1Mass2ToMtotalQ
 
 #
 # =============================================================================
@@ -1655,6 +1716,8 @@ transforms = {
     CustomTransform.name : CustomTransform,
     MchirpQToMass1Mass2.name : MchirpQToMass1Mass2,
     Mass1Mass2ToMchirpQ.name : Mass1Mass2ToMchirpQ,
+    MtotalQToMass1Mass2.name : MtotalQToMass1Mass2,
+    Mass1Mass2ToMtotalQ.name : Mass1Mass2ToMtotalQ,
     MchirpQToMtotalQ.name : MchirpQToMtotalQ,
     MtotalQToMchirpQ.name : MtotalQToMchirpQ,
     Mass1Mass2ToMchirpEta.name : Mass1Mass2ToMchirpEta,
