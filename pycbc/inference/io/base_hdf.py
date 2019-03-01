@@ -29,9 +29,10 @@ from __future__ import absolute_import
 
 import sys
 import logging
+import inspect
 from abc import (ABCMeta, abstractmethod)
-import numpy
 
+import numpy
 import h5py
 
 from pycbc import modelsetup
@@ -348,7 +349,7 @@ class BaseInferenceFile(h5py.File):
             The result of the function applied to all relevant samples
             (thinned and only first temperature, if applicable).
         """
-        fvarnames = func.__code__.co_varnames
+        fvarnames = inspect.getargspec(func)
         samples = self.read_relevant_samples(list(fvarnames))
         fsamples = {key: samples[key] for key in fvarnames}
         return func(**fsamples)
@@ -431,7 +432,7 @@ class BaseInferenceFile(h5py.File):
             logging.warn("Returning 0")
             return 0
         # Always mass1, mass2 and cartesian spins in the injection for the waveform
-        varnames = ['mass1','mass2','spin1x','spin1y','spin2x','spin2y']
+        varnames = inspect.getargspec(conversions.chi_p)[0]
         injection_params = self.get_injection_params()
         tval = conversions.chi_p(**{key: injection_params[key] for key in varnames}) 
         return self.get_marginalized_MSE(func, tval)
