@@ -269,6 +269,22 @@ class BaseInferenceFile(h5py.File):
             self.write_D()
             return self.attrs['D']
 
+    def get_injection_params(self):
+        """
+        Returns the parameters with which the injection which is 
+        used as 'data' in this file was generated.
+
+        Returns
+        -------
+        dict:
+            A dict mapping parameter names to values which they had 
+            in the injection.
+        """
+        pars = self['injections'].attrs
+        if not 'coa_phase' in pars:
+            pars['coa_phase'] = 0
+        return pars
+
     def calculate_injection_logprobabilities(self):
         """Calculates the loglikelihood and the logprior of the model
         used to generate this file at the injection values.
@@ -279,9 +295,7 @@ class BaseInferenceFile(h5py.File):
         """
         arg = self.cmd.split()[1:]
         m = modelsetup.setup_model_from_arg(arg)
-        pars = self['injections'].attrs 
-        if not 'coa_phase' in pars:
-            pars['coa_phase'] = 0
+        pars = self.get_injection_params()
         # This currently only works if the injection.ini file is given entirely
         # in parameters that the waveform generator understands.
         # Normally, we insert the sampling parameters and need the 
@@ -332,7 +346,7 @@ class BaseInferenceFile(h5py.File):
         fvarnames = func.__code__.co_varnames
         samples = self.read_relevant_samples(list(fvarnames))
         fsamples = {key: samples[key] for key in fvarnames}
-        return func(**samples)
+        return func(**fsamples)
     
     def get_marginalized_D(self, func):
         """
