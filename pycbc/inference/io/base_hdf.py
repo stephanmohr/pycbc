@@ -349,7 +349,7 @@ class BaseInferenceFile(h5py.File):
             The result of the function applied to all relevant samples
             (thinned and only first temperature, if applicable).
         """
-        fvarnames = inspect.getargspec(func)
+        fvarnames = inspect.getargspec(func)[0]
         samples = self.read_relevant_samples(list(fvarnames))
         fsamples = {key: samples[key] for key in fvarnames}
         return func(**fsamples)
