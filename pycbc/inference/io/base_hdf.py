@@ -374,10 +374,10 @@ class BaseInferenceFile(h5py.File):
         """
         pass
     
-    def get_marginalized_MSE(self, func):
+    def get_marginalized_MSE(self, func, tval):
         """
         Calculates the mean squared error of the marginalized posterior
-        distribution from the injection values.
+        distribution from the 'true' value
 
         Parameters
         ----------
@@ -386,15 +386,16 @@ class BaseInferenceFile(h5py.File):
             argument and return a value which supports addition and 
             scalar multiplication.
         
+        tval: float
+            The desired value.
+        
         Returns
         -------
         float 
             MSE of the posterior from the injection values.
         """
         marginalized_samples = self.get_marginalized_samples(func)
-        injection_params = self.get_injection_params()
-        marginalized_injection = func(**injection_params)
-        return ((marginalized_samples - marginalized_injection)**2).mean()
+        return ((marginalized_samples - tval)**2).mean()
     
     def get_chi_p_MSE(self):
         """
@@ -429,7 +430,11 @@ class BaseInferenceFile(h5py.File):
             logging.warn(valid_params)
             logging.warn("Returning 0")
             return 0
-        return self.get_marginalized_MSE(func)
+        # Always mass1, mass2 and cartesian spins in the injection for the waveform
+        varnames = conversions.chi_p.__code__.co_varnames
+        injection_params = self.get_injection_params()
+        tval = conversions.chi_p(**{key: injection_params[key] for key in varnames}) 
+        return self.get_marginalized_MSE(func, tval)
 
 
     @abstractmethod
