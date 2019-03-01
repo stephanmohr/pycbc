@@ -280,9 +280,14 @@ class BaseInferenceFile(h5py.File):
             A dict mapping parameter names to values which they had 
             in the injection.
         """
-        pars = self['injections'].attrs
+        pars = dict(self['injections'].attrs.items())
         if not 'coa_phase' in pars:
             pars['coa_phase'] = 0
+        for p in ['f_lower', 'f_ref']:
+            try:
+                del pars[p]
+            except:
+                pass
         return pars
 
     def calculate_injection_logprobabilities(self):
