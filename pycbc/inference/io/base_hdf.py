@@ -310,6 +310,82 @@ class BaseInferenceFile(h5py.File):
         except KeyError:
             self.write_injection_logposterior()
             return self.attrs['injection_logposterior']
+    
+    def get_marginalized_samples(self, func):
+        """
+        Returns an array of samples by applying the given function to the 
+        posterior samples.
+
+        Parameters
+        ----------
+        func : function: parameters -> vectorspace 
+            May take any number of names of samples of this file as 
+            argument and return a value which supports addition and 
+            scalar multiplication.
+        
+        Returns
+        -------
+        array
+            The result of the function applied to all relevant samples
+            (thinned and only first temperature, if applicable).
+        """
+        fvarnames = func.__code__.co_varnames
+        samples = self.read_relevant_samples(list(fvarnames))
+        return func(**samples)
+    
+    def get_marginalized_D(self, func):
+        """
+        Calculates the D parameter for a marginalized distribution, where the
+        marginalization is achieved by applying func to all relevant
+        samples in this file.
+
+        Parameters
+        ----------
+        func : function: parameters -> vectorspace
+            May take any number of names of samples of this file as 
+            argument and return a value which supports addition and 
+            scalar multiplication.
+        
+        Returns
+        -------
+        float
+            Percentile of the smallest highest probability density
+            confidence interval that includes the injection parameters.
+        """
+        pass
+    
+    def get_marginalized_MSE(self, func):
+        """
+        Calculates the mean squared error of the marginalized posterior
+        distribution from the injection values.
+
+        Parameters
+        ----------
+        func : function: parameters -> float
+            May take any number of names of samples of this file as 
+            argument and return a value which supports addition and 
+            scalar multiplication.
+        
+        Returns
+        -------
+        float 
+            MSE of the posterior from the injection values.
+        """
+        marginalized_samples = self.get_marginalized_samples(func)
+        injection_params = self.get_injection_params()
+        marginalized_injection = func(**injection_params)
+        return ((marginalized_samples - marginalized_injection)**2).mean()
+    
+    def get_chi_p_MSE(self):
+        """
+        Calculates the MSE of the posterior distribution for chi_p
+        from the corresponding injected value.
+
+        Returns
+        -------
+        float
+            The MSE of the posterior for chi_p from the injected value
+        """
         
 
     @abstractmethod
