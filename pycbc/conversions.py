@@ -640,20 +640,6 @@ def chi_p_from_chi1_perp_chi2_perp_q(chi1_perp,chi2_perp,q):
     chi_p[mask2] = numpy.maximum(chi1_perp[mask2]/B[mask2],chi2_perp[mask2])
     return formatreturn(chi_p , input_is_array)
 
-def chi_p_from_zeta1_zeta2_mass1_mass2(zeta1, zeta2, mass1, mass2):
-    """
-    Returns the effective precession spin from the perpendicular spin 
-    amplitudes and the masses.
-    """
-    zetaprime = primary_spin(mass1, mass2, zeta1, zeta2)
-    zetasec = secondary_spin(mass1, mass2, zeta1, zeta2)
-    q = q_from_mass1_mass2(mass1, mass2)
-    chihat = (4*q + 3)/(4*q + 3*q**2) * zetasec 
-    chi_p = zetaprime
-    mask = zetaprime < chihat 
-    chi_p[mask] = chihat[mask]
-return chi_p
-
 def spinx_from_chi_perp_phi(chi_perp,phi):
     """
     Returns the x-component of the spin.

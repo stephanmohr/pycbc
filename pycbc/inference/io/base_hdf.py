@@ -386,7 +386,31 @@ class BaseInferenceFile(h5py.File):
         float
             The MSE of the posterior for chi_p from the injected value
         """
-        
+        from pycbc import conversions
+        valid_params = self['samples'].keys()
+        if 'zeta1' in valid_params and 'zeta2' in valid_params:
+            def func(zeta1, zeta2, mass1, mass2):
+                return conversions.chi_p_from_chi1_perp_chi2_perp_q(
+                    zeta1, zeta2, mass1 / mass2)
+        elif 'spin1_a' in valid_params and 'spin2_a' in valid_params:
+            if 'mass1' in valid_params and 'mass2' in valid_params:
+                func = conversions.chi_p_from_spherical
+            elif 'q' in valid_params and 'mtotal' in valid_params:
+                def func(q, mtotal, spin1_a, spin2_a,
+                         spin1_azimuthal, spin2_azimuthal,
+                         spin1_polar, spin2_polar):
+                    mass1 = conversions.mass1_from_mtotal_q(mtotal, q)
+                    mass2 = conversions.mass2_from_mtotal_q(mtotal, q)
+                    return conversions.chi_p_from_spherical(mass1, mass2, 
+                        spin1_a, spin1_azimuthal, spin1_polar,
+                        spin2_a, spin2_azimuthal, spin2_polar)
+        else:
+            logging.warn("Could not find necessary parameters in ")
+            logging.warn(valid_params)
+            logging.warn("Returning 0")
+            return 0
+        return get_marginalized_MSE(func)
+
 
     @abstractmethod
     def write_posterior(self, filename, **kwargs):
