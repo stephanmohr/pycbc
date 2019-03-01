@@ -331,6 +331,7 @@ class BaseInferenceFile(h5py.File):
         """
         fvarnames = func.__code__.co_varnames
         samples = self.read_relevant_samples(list(fvarnames))
+        fsamples = {key: samples[key] for key in fvarnames}
         return func(**samples)
     
     def get_marginalized_D(self, func):
