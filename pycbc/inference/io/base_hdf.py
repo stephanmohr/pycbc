@@ -409,7 +409,7 @@ class BaseInferenceFile(h5py.File):
             logging.warn(valid_params)
             logging.warn("Returning 0")
             return 0
-        return get_marginalized_MSE(func)
+        return self.get_marginalized_MSE(func)
 
 
     @abstractmethod
