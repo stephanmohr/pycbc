@@ -431,7 +431,7 @@ class BaseInferenceFile(h5py.File):
             logging.warn("Returning 0")
             return 0
         # Always mass1, mass2 and cartesian spins in the injection for the waveform
-        varnames = conversions.chi_p.__code__.co_varnames
+        varnames = ['mass1','mass2','spin1x','spin1y','spin2x','spin2y']
         injection_params = self.get_injection_params()
         tval = conversions.chi_p(**{key: injection_params[key] for key in varnames}) 
         return self.get_marginalized_MSE(func, tval)
