@@ -151,6 +151,14 @@ def setup_model_from_result(filename):
                           static_params=static_params)
     return model
 
+def get_lognl(config_file, injection_file):
+    """
+    Generates the model defined by injection_file and config_file,
+    calculates the lognl and returns it.
+    """
+    m = setup_model(config_file=config_file, injection_file=injection_file)
+    lognl = m.lognl
+    return lognl
 
 class model_optimizer:
     """Wraps model to allow optimization by scipy.optimize function.
