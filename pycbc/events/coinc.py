@@ -471,17 +471,15 @@ def cluster_over_time(stat, time, window, argmax=numpy.argmax):
     cindex: numpy.ndarray
         The set of indices corresponding to the surviving coincidences.
     """
-    logging.info('clustering events over %ss window' % window)
+    logging.info('Clustering events over %s s window', window)
 
     indices = []
     time_sorting = time.argsort()
     stat = stat[time_sorting]
     time = time[time_sorting]
 
-    logging.info('sorting...')
     left = numpy.searchsorted(time, time - window)
     right = numpy.searchsorted(time, time + window)
-    logging.info('done sorting')
     indices = numpy.zeros(len(left), dtype=numpy.uint32)
 
     # i is the index we are inspecting, j is the next one to save
@@ -516,7 +514,7 @@ def cluster_over_time(stat, time, window, argmax=numpy.argmax):
 
     indices = indices[:j]
 
-    logging.info('done clustering coinc triggers: %s triggers remaining' % len(indices))
+    logging.info('%d triggers remaining', len(indices))
     return time_sorting[indices]
 
 class MultiRingBuffer(object):
@@ -587,12 +585,13 @@ class MultiRingBuffer(object):
         count[self.index < self.start] += self.pad_count
         return count
 
-    def buffer_total(self):
-        return self.ring_sizes().sum()
-
     def num_elements(self):
         total = self.ring_sizes().sum()
         return total
+
+    @property
+    def nbytes(self):
+        return self.buffer.nbytes
 
     def discard_last(self, indices):
         """Discard the triggers added in the latest update"""
@@ -682,6 +681,13 @@ class CoincExpireBuffer(object):
         for ifo in self.ifos:
             self.time[ifo] = 0
             self.timer[ifo] = numpy.zeros(initial_size, dtype=numpy.int32)
+
+    def __len__(self):
+        return self.index
+
+    @property
+    def nbytes(self):
+        return self.buffer.nbytes
 
     def increment(self, ifos):
         """Increment without adding triggers"""
@@ -1167,6 +1173,14 @@ class LiveCoincTimeslideBackgroundEstimator(object):
         coinc_results: dict of arrays
             A dictionary of arrays containing the coincident results.
         """
+        # Let's see how large everything is
+        for ifo in self.singles:
+            logging.info('BKG %s singles %s stored %s bytes',
+                         ifo, self.singles[ifo].num_elements(),
+                         self.singles[ifo].nbytes)
+        logging.info('BKG Coincs %s stored %s bytes',
+                     len(self.coincs), self.coincs.nbytes)
+
         # If there are no results just return
         valid_ifos = [k for k in results.keys() if results[k] and k in self.ifos]
         if len(valid_ifos) == 0: return {}
