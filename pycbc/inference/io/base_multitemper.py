@@ -26,8 +26,12 @@
 
 from __future__ import absolute_import
 import argparse
+import pickle 
+
 from .base_mcmc import MCMCMetadataIO
 import numpy
+
+from pycbc.filter import autocorrelation
 
 class ParseTempsArg(argparse.Action):
     """Argparse action that will parse temps argument.
@@ -256,3 +260,37 @@ class MultiTemperedMCMCIO(object):
                 arr = arr.reshape((ntemps, nwalkers, niterations))
             arrays[name] = arr
         return arrays
+
+    def acl_source_param(self, paramsfile, tempsfile, checkpoint_interval=2000):
+        """
+        At every checkpoint interval, calculate the acl for every parameter
+        and every temperature. Then pick the combination for which the 
+        acl was highest and save the temperature to tempsfile, the 
+        parameter to paramsfile.
+        """
+        max_params = []
+        max_temps = []
+        for N in range(checkpoint_interval, self.niterations, checkpoint_interval):
+            acls = []
+            for param in self.variable_params:
+                for temp in [0,1,2,3]:
+                    samples = self.read_raw_samples(
+                        param, thin_start=0, thin_interval=1, 
+                        thin_end=N, flatten=False)[param][temp]
+                    samples = samples.mean(axis=0)
+                    acl = autocorrelation.calculate_acl(samples)
+                    acls.append((acl, param, temp))
+                    break
+                break
+            def maxfilter(x, y):
+                if x[0] > y[0]:
+                    return x
+                return y
+            max_element = reduce(maxfilter, acls)
+            max_params.append(max_element[1])
+            max_temps.append(max_element[2])
+            break
+        with open(paramsfile, 'w') as f:
+            pickle.dump(max_params, f)
+        with open(tempsfile, 'w') as f:
+            pickle.dump(max_temps, f)

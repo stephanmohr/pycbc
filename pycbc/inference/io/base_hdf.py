@@ -1014,4 +1014,4 @@ class BaseInferenceFile(h5py.File):
                 axs[i].set_title('samples in ['+str(thin_start)+","+str(thin_end)+"]")
                 axs[i].legend()
                 axs[i].axhline(color='black', linewidth=0.7)
-            fig.savefig('autocovariance_of_' + str(param) + '_' + mode)  
+            fig.savefig('autocovariance_of_' + str(param) + '_' + mode)
