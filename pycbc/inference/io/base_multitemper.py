@@ -280,8 +280,6 @@ class MultiTemperedMCMCIO(object):
                     samples = samples.mean(axis=0)
                     acl = autocorrelation.calculate_acl(samples)
                     acls.append((acl, param, temp))
-                    break
-                break
             def maxfilter(x, y):
                 if x[0] > y[0]:
                     return x
@@ -289,7 +287,6 @@ class MultiTemperedMCMCIO(object):
             max_element = reduce(maxfilter, acls)
             max_params.append(max_element[1])
             max_temps.append(max_element[2])
-            break
         with open(paramsfile, 'w') as f:
             pickle.dump(max_params, f)
         with open(tempsfile, 'w') as f:
