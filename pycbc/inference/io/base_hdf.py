@@ -981,7 +981,7 @@ class BaseInferenceFile(h5py.File):
         n = len(parameters) - 1
         fig, axs = plt.subplots(nrows=int(n // rowlength)+1, 
                                 ncols=min(rowlength, n),
-                                sharex=True, sharey=True, 
+                                sharex=True, sharey=False, 
                                 figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
         axs = axs.ravel()
         for i, param in enumerate(parameters):
@@ -1003,7 +1003,7 @@ class BaseInferenceFile(h5py.File):
         n = len(parameters) - 1
         fig, axs = plt.subplots(nrows=int(n // rowlength)+1, 
                                 ncols=min(rowlength, n),
-                                sharex=True, sharey=False, 
+                                sharex=True, sharey=True, 
                                 figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
         axs = axs.ravel()
         for i, param in enumerate(parameters):
