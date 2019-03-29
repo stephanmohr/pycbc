@@ -270,7 +270,7 @@ class MultiTemperedMCMCIO(object):
         """
         max_params = []
         max_temps = []
-        for N in range(checkpoint_interval, self.niterations, checkpoint_interval):
+        for N in range(checkpoint_interval, max(self.niterations, 80000), checkpoint_interval):
             acls = []
             for param in self.variable_params:
                 for temp in [0,1,2,3]:
@@ -287,7 +287,7 @@ class MultiTemperedMCMCIO(object):
             max_element = reduce(maxfilter, acls)
             max_params.append(max_element[1])
             max_temps.append(max_element[2])
-        with open(paramsfile, 'w') as f:
-            pickle.dump(max_params, f)
-        with open(tempsfile, 'w') as f:
-            pickle.dump(max_temps, f)
+            with open(paramsfile, 'w') as f:
+                pickle.dump(max_params, f)
+            with open(tempsfile, 'w') as f:
+                pickle.dump(max_temps, f)
