@@ -986,12 +986,12 @@ class BaseInferenceFile(h5py.File):
         axs = axs.ravel()
         for i, param in enumerate(parameters):
             cmeans = self.comoving_means(D=D, parameters=param)[param]
-            axs[i].plot(cmmeans)
+            axs[i].plot(cmeans)
             axs[i].set_title(param)
         fig.savefig(name, dpi=400)
         return fig
     
-    def plot_comoving_acls(self, name, D=10, parameters=None, , interval=2000, rowlength=5):
+    def plot_comoving_acls(self, name, D=10, parameters=None, interval=2000, rowlength=5):
         """
         Calculates the comoving means for the given parameters, the corresponding
         acl and plots the result.
@@ -1010,12 +1010,10 @@ class BaseInferenceFile(h5py.File):
             cmeans = self.comoving_means(D=D, parameters=param)[param]
             x = list(range(interval, self.niterations, interval))
             y = [autocorrelation.calculate_acl(cmeans[:z]) for z in x]
-            axs[i].plot(x,y, label=mode)
+            axs[i].plot(x)
             axs[i].set_title(param)
         fig.savefig(name, dpi=400)
         return fig
-
-
 
     def plot_acfs(self, parameters, nsets=5):
         """ Plot the acfs for given parameters for several different numbers of 
