@@ -946,6 +946,76 @@ class BaseInferenceFile(h5py.File):
         fig.savefig("ensemble_averages")
         fig2.savefig("fourier_transforms") 
         fig3.savefig("variances")
+    
+    def comoving_means(self, D=10, parameters=None, thin_start=0, thin_end=None):
+        """
+        Calculates the ensemble means for the given parameters and then 
+        averages those over D indices in both directions.
+        """
+        if thin_end is None:
+            thin_end = self.niterations
+        if isinstance(parameters, str):
+            parameters = [parameters]
+        elif parameters is None:
+            parameters = self.variable_params
+        d = dict()
+        for param in parameters:
+            samples = self.read_raw_samples(param, thin_start=thin_start,
+                    thin_interval=1, thin_end=thin_end, flatten=False)[param]
+            means = self.average_walkers(samples)
+            pad = numpy.zeros(len(means)+D)
+            pad[D:] = means
+            pad[:D] = means[0]
+            cmeans = numpy.convolve(pad, numpy.ones(2*D+1)/(2*D+1), mode='valid')
+            d[param] = cmeans
+        return d
+    
+    def plot_comoving_means(self, name, D=10, parameters=None, rowlength=5):
+        """
+        Calculates the comoving means for the given parameters and plots them.
+        """
+        if isinstance(parameters, str):
+            parameters = [parameters]
+        if parameters is None:
+            parameters = sorted(self.variable_params)
+        n = len(parameters) - 1
+        fig, axs = plt.subplots(nrows=int(n // rowlength)+1, 
+                                ncols=min(rowlength, n),
+                                sharex=True, sharey=True, 
+                                figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
+        axs = axs.ravel()
+        for i, param in enumerate(parameters):
+            cmeans = self.comoving_means(D=D, parameters=param)[param]
+            axs[i].plot(cmmeans)
+            axs[i].set_title(param)
+        fig.savefig(name, dpi=400)
+        return fig
+    
+    def plot_comoving_acls(self, name, D=10, parameters=None, , interval=2000, rowlength=5):
+        """
+        Calculates the comoving means for the given parameters, the corresponding
+        acl and plots the result.
+        """
+        if isinstance(parameters, str):
+            parameters = [parameters]
+        if parameters is None:
+            parameters = sorted(self.variable_params)
+        n = len(parameters) - 1
+        fig, axs = plt.subplots(nrows=int(n // rowlength)+1, 
+                                ncols=min(rowlength, n),
+                                sharex=True, sharey=True, 
+                                figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
+        axs = axs.ravel()
+        for i, param in enumerate(parameters):
+            cmeans = self.comoving_means(D=D, parameters=param)[param]
+            x = list(range(interval, self.niterations, interval))
+            y = [autocorrelation.calculate_acl(cmeans[:z]) for z in x]
+            axs[i].plot(x,y, label=mode)
+            axs[i].set_title(param)
+        fig.savefig(name, dpi=400)
+        return fig
+
+
 
     def plot_acfs(self, parameters, nsets=5):
         """ Plot the acfs for given parameters for several different numbers of 
