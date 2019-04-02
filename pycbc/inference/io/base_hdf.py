@@ -1048,7 +1048,6 @@ class BaseInferenceFile(h5py.File):
                 axs[i].axhline(color='black', linewidth=0.7)
             fig.savefig('autocorrelation_of_' + str(param)) 
 
-
     def plot_autocov(self, parameters=None, nsets=5, mode='sequential',
                      func='standard'):
         """

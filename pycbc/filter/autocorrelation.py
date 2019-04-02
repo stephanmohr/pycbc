@@ -255,7 +255,7 @@ def calculate_acl(data, m=5, dtype=int):
         acl = numpy.inf
     return acl
 
-def batch_acl(samples, nbatches): 
+def calculate_batch_acl(samples, nbatches): 
     """
     Performs the batch-mean algorithm to calculate the acl of samples.
 
