@@ -947,7 +947,7 @@ class BaseInferenceFile(h5py.File):
         fig2.savefig("fourier_transforms") 
         fig3.savefig("variances")
     
-    def comoving_means(self, D=10, parameters=None, thin_start=0, thin_end=None):
+    def moving_means(self, D=10, parameters=None, thin_start=0, thin_end=None):
         """
         Calculates the ensemble means for the given parameters and then 
         averages those over D indices in both directions.
@@ -966,11 +966,11 @@ class BaseInferenceFile(h5py.File):
             pad = numpy.zeros(len(means)+D)
             pad[D:] = means
             pad[:D] = means[0]
-            cmeans = numpy.convolve(pad, numpy.ones(2*D+1)/(2*D+1), mode='valid')
-            d[param] = cmeans
+            mmeans = numpy.convolve(pad, numpy.ones(2*D+1)/(2*D+1), mode='valid')
+            d[param] = mmeans
         return d
     
-    def plot_comoving_means(self, name, D=10, parameters=None, rowlength=5):
+    def plot_moving_means(self, name, D=10, parameters=None, rowlength=5):
         """
         Calculates the comoving means for the given parameters and plots them.
         """
@@ -985,13 +985,13 @@ class BaseInferenceFile(h5py.File):
                                 figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
         axs = axs.ravel()
         for i, param in enumerate(parameters):
-            cmeans = self.comoving_means(D=D, parameters=param)[param]
-            axs[i].plot(cmeans)
+            mmeans = self.moving_means(D=D, parameters=param)[param]
+            axs[i].plot(mmeans)
             axs[i].set_title(param)
         fig.savefig(name, dpi=400)
         return fig
     
-    def plot_comoving_acls(self, name, D=10, parameters=None, interval=2000, rowlength=5):
+    def plot_moving_acls(self, name, D=10, parameters=None, interval=2000, rowlength=5):
         """
         Calculates the comoving means for the given parameters, the corresponding
         acl and plots the result.
@@ -1007,7 +1007,7 @@ class BaseInferenceFile(h5py.File):
                                 figsize=(rowlength*2.5, int(round(n//rowlength+0.5))*2.5))
         axs = axs.ravel()
         for i, param in enumerate(parameters):
-            cmeans = self.comoving_means(D=D, parameters=param)[param]
+            cmeans = self.moving_means(D=D, parameters=param)[param]
             x = list(range(interval, self.niterations, interval))
             y = [autocorrelation.calculate_acl(cmeans[:z]) for z in x]
             axs[i].plot(x,y)
