@@ -273,7 +273,7 @@ class MultiTemperedMCMCIO(object):
         for N in range(checkpoint_interval, max(self.niterations, 80000), checkpoint_interval):
             acls = []
             for param in self.variable_params:
-                for temp in [0,1,2,3]:
+                for temp in [0,1,2,3,4]:
                     samples = self.read_raw_samples(
                         param, thin_start=0, thin_interval=1, 
                         thin_end=N, flatten=False)[param][temp]
