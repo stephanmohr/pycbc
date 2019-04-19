@@ -697,7 +697,7 @@ class UniformChiPChiEffGamma(Arbitrary):
         #if not numpy.all(test): 
         #    print("Constraints not fulfilled.")
         #    print(values[:][numpy.logical_not(test)])
-        return test 
+        return test
 
     def __contains__(self,params):
         """
