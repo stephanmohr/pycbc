@@ -1057,3 +1057,31 @@ class UniformComponentMassesChiPChiEff(UniformChiPChiEffGamma):
             nsamples = None
         return cls(mass1=mass1, mass2=mass2, chi_eff=chi_eff,
                    chi_p=chi_p, nsamples=nsamples)
+
+class SingleMassChiPChiEff(UniformChiPChiEffGamma):
+    """
+    Draw masses always returns the same number.
+    """
+    name = "single_mass_chip_chieff"
+
+    def __init__(self, **kwargs):
+        junk = Uniform(x=[10, 100])
+        mass_bounds = junk.bounds['x']
+        super(SingleMassChiPChiEff, self).__init__(
+            mass1_bounds=mass_bounds, mass2_bounds=mass_bounds, **kwargs)
+    
+    def _drawMasses(self, size=1, **kwargs):
+        """
+        Draw a sample for the masses.
+        """
+        mass1 = np.zeros(size) + self.m1
+        mass2 = np.zeros(size) + self.m2
+        return mass1, mass2
+    
+    def from_config(cls, cp, section, variable_args):
+        tag = variable_args
+        variable_args = variable_args.splot(VARARGS_DELIM)
+        if not set(variable_args) >= set(cls._params):
+            raise ValuesError("Not all parameters used by this distribution"
+                              "included in tag portrtion of section name")
+        
