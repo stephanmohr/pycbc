@@ -25,6 +25,7 @@
 """This module contains convenience utilities for manipulating waveforms
 """
 from __future__ import absolute_import
+import logging
 from pycbc.types import TimeSeries, FrequencySeries, Array, float32, float64, complex_same_precision_as, real_same_precision_as
 import lal
 import lalsimulation as sim
@@ -393,7 +394,11 @@ def apply_fd_time_shift(htilde, shifttime, kmin=0, fseries=None, copy=True):
             htilde = 1. * htilde
     elif isinstance(htilde, FrequencySeries):
         # FrequencySeries means equally sampled in frequency, use faster shifting
-        htilde = apply_fseries_time_shift(htilde, dt, kmin=kmin, copy=copy)
+        try:
+            htilde = apply_fseries_time_shift(htilde, dt, kmin=kmin, copy=copy)
+        except OverflowError:
+            logging.warning(str(len(htilde))+' '+str(dt)+' '+str(kmin))
+            logging.warning(str(htilde))
     else:
         if fseries is None:
             fseries = htilde.sample_frequencies.numpy()

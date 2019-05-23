@@ -18,6 +18,8 @@ allows for the likelihood to be marginalized over phase and/or time and/or
 distance.
 """
 
+import logging
+
 import numpy
 from scipy import special
 
