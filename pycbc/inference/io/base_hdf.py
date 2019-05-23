@@ -399,16 +399,19 @@ class BaseInferenceFile(h5py.File):
         """
         marginalized_samples = self.get_marginalized_samples(func)
         return ((marginalized_samples - tval)**2).mean()
-    
-    def get_chi_p_MSE(self):
+ 
+
+    def get_chi_p_function(self):
         """
-        Calculates the MSE of the posterior distribution for chi_p
-        from the corresponding injected value.
+        Checks which computation method of chi_p is possible with the 
+        parameters in this file without any further conversions
+        and returns the function that performs this computation.
 
         Returns
         -------
-        float
-            The MSE of the posterior for chi_p from the injected value
+        function
+            The returned function computes chi_p and takes as input
+            only parameters that are available in this file.
         """
         from pycbc import conversions
         valid_params = self['samples'].keys()
@@ -433,12 +436,48 @@ class BaseInferenceFile(h5py.File):
             logging.warn(valid_params)
             logging.warn("Returning 0")
             return 0
+        return func
+
+    def get_chi_p_MSE(self)
+        """
+        Computes the MSE of the posterior distribution for chi_p
+        from the corresponding injected value.
+
+        Returns
+        -------
+        float
+            The MSE of the posterior for chi_p from the injected value.
+        """
+        func = self.get_chi_p_function()
         # Always mass1, mass2 and cartesian spins in the injection for the waveform
         varnames = inspect.getargspec(conversions.chi_p)[0]
         injection_params = self.get_injection_params()
         tval = conversions.chi_p(**{key: injection_params[key] for key in varnames}) 
         return self.get_marginalized_MSE(func, tval)
 
+    def get_chi_p_MSE_error(self):
+        """
+        Computes the MCMC variance estimate for the MSE estimate from the 
+        chi_p sample distribution. 
+
+        Returns
+        -------
+        float
+            The MCMC error estimated of the chi_p MSE.
+        """
+        func = self.get_chi_p_function()
+        varnames = inspect.getargspec(conversions.chi_p)[0]
+        injection_params = self.get_injection_params()
+        tval = conversions.chi_p(**{key: injection_params[key] for key in varnames})
+        marginalized_samples = self.get_marginalized_samples(func)
+        mse_samples = (marginalized_samples - tval)**2
+        mse_estimate = mse_samples.mean()
+        mse_variance_estimate = (mse_samples - mse_estimate)**2
+        print('mse estimate', mse_estimate)
+        print('mse variance estimate', mse_variance_estimate)
+        acl = autocorrelation.calculate_acl(mse_samples)
+        print('acl', acl)
+        return acl * mse_variance_estimate
 
     @abstractmethod
     def write_posterior(self, filename, **kwargs):
