@@ -38,6 +38,7 @@ import h5py
 from pycbc import modelsetup
 from pycbc.io import FieldArray
 from pycbc.inject import InjectionSet
+from pycbc.filter import autocorrelation
 
 class BaseInferenceFile(h5py.File):
     """Base class for all inference hdf files.
@@ -438,7 +439,7 @@ class BaseInferenceFile(h5py.File):
             return 0
         return func
 
-    def get_chi_p_MSE(self)
+    def get_chi_p_MSE(self):
         """
         Computes the MSE of the posterior distribution for chi_p
         from the corresponding injected value.
@@ -448,6 +449,7 @@ class BaseInferenceFile(h5py.File):
         float
             The MSE of the posterior for chi_p from the injected value.
         """
+        from pycbc import conversions
         func = self.get_chi_p_function()
         # Always mass1, mass2 and cartesian spins in the injection for the waveform
         varnames = inspect.getargspec(conversions.chi_p)[0]
@@ -465,6 +467,7 @@ class BaseInferenceFile(h5py.File):
         float
             The MCMC error estimated of the chi_p MSE.
         """
+        from pycbc import conversions
         func = self.get_chi_p_function()
         varnames = inspect.getargspec(conversions.chi_p)[0]
         injection_params = self.get_injection_params()
@@ -472,7 +475,7 @@ class BaseInferenceFile(h5py.File):
         marginalized_samples = self.get_marginalized_samples(func)
         mse_samples = (marginalized_samples - tval)**2
         mse_estimate = mse_samples.mean()
-        mse_variance_estimate = (mse_samples - mse_estimate)**2
+        mse_variance_estimate = ((mse_samples - mse_estimate)**2).mean()
         print('mse estimate', mse_estimate)
         print('mse variance estimate', mse_variance_estimate)
         acl = autocorrelation.calculate_acl(mse_samples)
