@@ -24,6 +24,9 @@ from pycbc import __version__
 from pycbc.strain.calibration import Recalibrate
 
 def setup_model_from_arg(arg):
+    """ Copy from pycbc_inference, until model is generated. 
+    Returns the model.
+    """
     from pycbc.inference import (models, burn_in, option_utils)
     parser = argparse.ArgumentParser()
     # command line usage
@@ -107,6 +110,14 @@ def setup_model_from_arg(arg):
 
 def setup_model(f_min=20,sample_rate=2048,injection_file="injection.hdf",
                 config_file="inference.ini",output_file="pseudo_out"):
+    """ Runs the first few lines of pycbc_inference until the model is 
+    generated and returns the model. Input parameters are passed to
+    these lines as if they were command line arguments. 
+    
+    The argument f_min is the lower-frequency-cutoff, not f_lower or f_ref.
+    f_lower and f_ref have to be specified in the injection and the config 
+    file.
+    """
     TRIGGER_TIME_INT=1126259462
     SEGLEN = 8
     GPS_START_TIME = TRIGGER_TIME_INT - SEGLEN
@@ -131,6 +142,8 @@ def setup_model(f_min=20,sample_rate=2048,injection_file="injection.hdf",
 
 
 def setup_model_from_result(filename):
+    """ Constructs a model instance from a results file.
+    """
     from pycbc.inference.models import GaussianNoise
     f = h5py.File(filename)
     signal = dict()
@@ -206,7 +219,20 @@ class model_optimizer:
         optRes = scipy.optimize.minimize(self.func, self.x, method='Nelder-Mead')
         return optRes
 
+
 def optimize_model_par(m, par):
+    """ Starting with a model instance and a dictionary of parameters
+    optimizes the loglikelihood function of that model with respect 
+    to the keys of the parameter dict and starting from the values of 
+    the parameter dict. 
+
+    Parameters
+    ----------
+    m : model instance
+        As returned by setup_model
+    par : dict
+        Parameter name -> Initial value
+    """
     mo = model_optimizer(m, par)
     m.update(**par)
     injection_loglikelihood = m.loglikelihood
@@ -217,18 +243,27 @@ def optimize_model_par(m, par):
     return (injection_loglikelihood, optimal_loglikelihood, 
             par, optimal_par)
 
+
 def optimize_injection(injection_file, config_file, f_min=20, 
                        sample_rate=2048, output_file="pseudo_out"):
+    """ For a given injection file runs the optimization procedure.
+    """
     m = setup_model(f_min=f_min, sample_rate=sample_rate, 
                     injection_file=injection_file, 
                     config_file=config_file, output_file=output_file)
     f = h5py.File(injection_file)
     par = dict(f.attrs.items())
+    # important, since otherwise f_lower and f_ref in config file are
+    # overwritten:
     del par['f_lower']
     del par['f_ref']
     return optimize_model_par(m, par)
 
+
 def optimize_results(result_file):
+    """ Constructs the model from a results file and then runs the 
+    optimization procedure.
+    """
     m = setup_model_from_result(result_file)
     f = h5py.File(result_file)
     par = dict(f['injections'].attrs.items())
@@ -236,6 +271,8 @@ def optimize_results(result_file):
     del par['f_ref']
     return optimize_model_par(m, par)
 
+
+# Convenience function:
 def optimize_to_files(injection_files, config_file, 
                       value_file, parameter_file):
     """
